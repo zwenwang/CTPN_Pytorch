@@ -1,8 +1,6 @@
-import torch
 from torch.utils.data import Dataset
 import lmdb
-import six
-from PIL import Image
+import other
 
 
 class LmdbDataset(Dataset):
@@ -22,15 +20,8 @@ class LmdbDataset(Dataset):
         index += 1
         with self.env.begin(write=False) as e:
             img_key = 'image-%09d' % index
-            img_buf = e.get(img_key)
-            buf = six.BytesIO()
-            buf.write(img_buf)
-            buf.seek(0)
-            try:
-                img = Image.open(buf).convert('RGB')
-            except IOError:
-                print('Corrupted image for {0}'.format(index))
-                return self[index + 1]
+            img_base64 = e.get(img_key)
+            img = other.base642np_image(img_base64)
             gt_key = 'gt-%09d' % index
             gt = str(e.get(gt_key))
         return img, gt

@@ -1,14 +1,22 @@
 import Dataset
 import os
+import codecs
 
 
-def read_gt_file(path):
+def read_gt_file(path, have_BOM=False):
     result = []
-    with open(path, 'r') as fp:
-        for line in fp.readlines():
-            pt = line.split(',')
+    if have_BOM:
+        fp = codecs.open(path, 'r', 'utf-8-sig')
+    else:
+        fp = open(path, 'r')
+    for line in fp.readlines():
+        pt = line.split(',')
+        if have_BOM:
+            box = [pt[i].encode('utf-8') for i in range(8)]
+        else:
             box = [pt[i] for i in range(8)]
-            result.append(box)
+        result.append(box)
+    fp.close()
     return result
 
 
@@ -22,7 +30,7 @@ def create_dataset_icdar2015(img_root, gt_root, output_path):
         gt_path = os.path.join(gt_root, gt_name)
         if not os.path.exists(gt_path):
             print('Ground truth file of image {0} not exists.'.format(im))
-        gt_data = read_gt_file(gt_path)
+        gt_data = read_gt_file(gt_path, have_BOM=True)
         im_path_list.append(os.path.join(img_root, im))
         gt_list.append(gt_data)
     assert len(im_path_list) == len(gt_list)
