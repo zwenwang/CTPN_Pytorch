@@ -31,15 +31,18 @@ import copy
 #     cv2.imshow('asd', im)
 #     cv2.waitKey(0)
 
-img_path = './img_1.jpg'
+img_path = './img_112.jpg'
 img = cv2.imread(img_path)
-gt = port.read_gt_file('./gt_img_1.txt', have_BOM=True)
+gt = port.read_gt_file('./gt_img_112.txt', have_BOM=True)
+
+img = other.draw_box_4pt(img, gt[0], color=(255, 0, 0))
 print(gt[0])
 
-img = other.draw_box_4pt(img, gt[1])
-cv2.imshow('kk', img)
-cv2.waitKey(0)
 
-img_scale, gt_scale = Dataset.scale_img(img, gt)
+# img_scale, gt_scale = Dataset.scale_img(img, gt)
 
-Dataset.generate_gt_anchor(img, gt[0])
+p, h, c = Dataset.generate_gt_anchor(img, gt[0])
+print(p, h, c)
+img = other.draw_box_h_and_c(img, p, h, c)
+# cv2.imshow('kk', img)
+# cv2.waitKey(0)
