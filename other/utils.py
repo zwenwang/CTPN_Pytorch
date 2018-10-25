@@ -5,7 +5,7 @@ import os
 
 
 def draw_box_4pt(img, pt, color=(0, 255, 0), thickness=1):
-    if isinstance(pt[0], str):
+    if not isinstance(pt[0], int):
         pt = [int(pt[i]) for i in range(8)]
     img = cv2.line(img, (pt[0], pt[1]), (pt[2], pt[3]), color, thickness)
     img = cv2.line(img, (pt[2], pt[3]), (pt[4], pt[5]), color, thickness)
@@ -51,10 +51,19 @@ def base642np_image(base64_str):
     return img
 
 
-def cal_line_y(pt1, pt2, x):
+def cal_line_y(pt1, pt2, x, form):
     if not isinstance(pt1[0], float) or not isinstance(pt2[0], float):
         pt1 = [float(pt1[i]) for i in range(len(pt1))]
         pt2 = [float(pt2[i]) for i in range(len(pt2))]
     if not isinstance(x, float):
         x = float(x)
-    return ((pt1[1] - pt2[1])/(pt1[0] - pt2[0])) * (x - pt1[0]) + pt1[1]
+    return form(((pt1[1] - pt2[1])/(pt1[0] - pt2[0])) * (x - pt1[0]) + pt1[1])
+
+
+def bi_range(start, end):
+    start = int(start)
+    end = int(end)
+    if start > end:
+        return range(end, start)
+    else:
+        return range(start, end)

@@ -1,12 +1,11 @@
-import Dataset.port as port
-import Dataset
-from PIL import Image
 import cv2
 import numpy as np
 import other
 import base64
 import os
 import copy
+import Dataset
+import Dataset.port as port
 
 
 # if __name__ == '__main__':
@@ -34,15 +33,17 @@ import copy
 img_path = './img_112.jpg'
 img = cv2.imread(img_path)
 gt = port.read_gt_file('./gt_img_112.txt', have_BOM=True)
-
+#
 img = other.draw_box_4pt(img, gt[0], color=(255, 0, 0))
 print(gt[0])
-
-
-# img_scale, gt_scale = Dataset.scale_img(img, gt)
-
-p, h, c = Dataset.generate_gt_anchor(img, gt[0])
-print(p, h, c)
-img = other.draw_box_h_and_c(img, p, h, c)
-# cv2.imshow('kk', img)
-# cv2.waitKey(0)
+# print(gt[0])
+#
+#
+# # img_scale, gt_scale = Dataset.scale_img(img, gt)
+#
+# p, h, c = Dataset.generate_gt_anchor(img, gt[0])
+# print(p, h, c)
+# img = other.draw_box_h_and_c(img, p, h, c)
+print(Dataset.cal_y_crossover_pt(gt[0], 100))
+cv2.imshow('kk', img)
+cv2.waitKey(0)
