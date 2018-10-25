@@ -15,7 +15,7 @@ def draw_box_4pt(img, pt, color=(0, 255, 0), thickness=1):
 
 
 def draw_box_2pt(img, pt, color=(0, 255, 0), thickness=1):
-    if isinstance(pt[0], str):
+    if not isinstance(pt[0], int):
         pt = [int(pt[i]) for i in range(4)]
     img = cv2.rectangle(img, (pt[0], pt[1]), (pt[2], pt[3]), color, thickness=thickness)
     return img
@@ -23,7 +23,7 @@ def draw_box_2pt(img, pt, color=(0, 255, 0), thickness=1):
 
 def draw_box_h_and_c(img, position, h, c, anchor_width=16, color=(0, 255, 0), thickness=1):
     x_left = position * anchor_width
-    x_right = position * (anchor_width + 1) - 1
+    x_right = (position + 1) * anchor_width - 1
     if h % 2 == 0:
         y_bottom = c + h / 2
         y_top = y_bottom + 1 - h
@@ -57,6 +57,8 @@ def cal_line_y(pt1, pt2, x, form):
         pt2 = [float(pt2[i]) for i in range(len(pt2))]
     if not isinstance(x, float):
         x = float(x)
+    if (pt1[0] - pt2[0]) == 0:
+        return -1
     return form(((pt1[1] - pt2[1])/(pt1[0] - pt2[0])) * (x - pt1[0]) + pt1[1])
 
 
