@@ -42,3 +42,12 @@ class VGG_16(nn.Module):
         x = F.relu(self.convolution5_2(x), inplace=True)
         x = F.relu(self.convolution5_3(x), inplace=True)
         return x
+
+
+class BLSTM(nn.Module):
+    def __init__(self, kernel_size, channel, hidden_unit, padding=None, stride=1, bidirectional=True):
+        super(BLSTM, self).__init__()
+        self.lstm = nn.LSTM(kernel_size * kernel_size * channel, channel, bidirectional=bidirectional)
+
+    def forward(self, x):
+        pass
