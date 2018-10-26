@@ -3,6 +3,9 @@ import torch.nn.functional as F
 
 
 class VGG_16(nn.Module):
+    """
+    VGG-16 without pooling layer before fc layer
+    """
     def __init__(self):
         super(VGG_16, self).__init__()
         self.convolution1_1 = nn.Conv2d(3, 3, 64, padding=1)
@@ -46,6 +49,14 @@ class VGG_16(nn.Module):
 
 class BLSTM(nn.Module):
     def __init__(self, kernel_size, channel, hidden_unit, padding=None, stride=1, bidirectional=True):
+        """
+        :param kernel_size: im2col kernel size
+        :param channel: lstm input channel num
+        :param hidden_unit: lstm hidden unit
+        :param padding: im2col padding
+        :param stride: im2col stride
+        :param bidirectional:
+        """
         super(BLSTM, self).__init__()
         self.lstm = nn.LSTM(kernel_size * kernel_size * channel, channel, bidirectional=bidirectional)
 

@@ -4,6 +4,13 @@ import copy
 
 
 def generate_gt_anchor(img, box, anchor_width=16):
+    """
+    calsulate ground truth fine-scale box
+    :param img: input image
+    :param box: ground truth box (4 point)
+    :param anchor_width:
+    :return: position:anchor position, h:anchor box height, cy:anchor center y-axis coordinate
+    """
     if not isinstance(box[0], float):
         box = [float(box[i]) for i in range(len(box))]
     result = {'position': [], 'h': [], 'cy': []}
@@ -22,6 +29,12 @@ def generate_gt_anchor(img, box, anchor_width=16):
 
 
 def cal_y_top_and_bottom(raw_img, position_pair, box):
+    """
+    :param raw_img:
+    :param position_pair: for example:[(0, 15), (16, 31), ...]
+    :param box: gt box (4 point)
+    :return:
+    """
     img = copy.deepcopy(raw_img)
     y_top = []
     y_bottom = []
