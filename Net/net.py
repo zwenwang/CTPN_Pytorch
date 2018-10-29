@@ -79,9 +79,9 @@ class CTPN(nn.Module):
         self.rnn.add_module('im2col', Net.Im2col((3, 3), (1, 1), (1, 1)))
         self.rnn.add_module('blstm', BLSTM(3 * 3 * 512, 128))
         self.FC = nn.Conv2d(256, 512, 1)
-        self.vertical_coordinate = nn.Conv2d(512, 2 * 9, 1)
-        self.score = nn.Conv2d(512, 2 * 9, 1)
-        self.side_refinement = nn.Conv2d(512, 9, 1)
+        self.vertical_coordinate = nn.Conv2d(512, 2 * 10, 1)
+        self.score = nn.Conv2d(512, 2 * 10, 1)
+        self.side_refinement = nn.Conv2d(512, 10, 1)
 
     def forward(self, x):
         x = self.cnn(x)
