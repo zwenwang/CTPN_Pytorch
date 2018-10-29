@@ -49,26 +49,25 @@ class rnn(torch.nn.Module):
         super(rnn, self).__init__()
         self.lstm = torch.nn.LSTM(3 * 3 * 512, 128, bidirectional=True)
 
-
     def forward(self, x):
         x = self.lstm(x)
         return x
 
 
+class Test_im2col(torch.nn.Module):
+    def __init__(self, kernel_size, stride, padding):
+        super(Test_im2col, self).__init__()
+        self.conv = torch.nn.Conv2d(3, 3, kernel_size, stride, padding=padding)
+
+    def forward(self, x):
+        x = self.conv(x)
+        return x
+
+
 if __name__ == '__main__':
-    # net = rnn()
-    # i = np.random.random(4608*10)
-    # i = i.reshape((10, 4608))
-    # i = i[:, np.newaxis, :]
-    # print(i.shape)
-    # t = torch.FloatTensor(i)
-    # j = net(t)
-    # print(type(j[0]))
-    # print(j[0].shape)
-    i = np.array(range(0, 225), dtype=np.uint8)
-    i = np.reshape(i, [3, 5, 5, 3])
-    i = i.transpose([0, 3, 1, 2])
-    # i = i[np.newaxis, :, :, :]
-    i = Net.im2col(i, None, (1, 1), None)
-    print(i.shape)
-    print(i)
+    x = np.random.randint(0, 100, (1, 3, 5, 5))
+    net = Net.Im2col((3, 3), (1, 1), (1, 1))
+    print(x)
+    x = torch.FloatTensor(x)
+    y = net(x)
+    print(y)

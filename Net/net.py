@@ -48,17 +48,14 @@ class VGG_16(nn.Module):
 
 
 class BLSTM(nn.Module):
-    def __init__(self, kernel_size, channel, hidden_unit, padding=None, stride=1, bidirectional=True):
+    def __init__(self, channel, hidden_unit, bidirectional=True):
         """
-        :param kernel_size: im2col kernel size
         :param channel: lstm input channel num
         :param hidden_unit: lstm hidden unit
-        :param padding: im2col padding
-        :param stride: im2col stride
         :param bidirectional:
         """
         super(BLSTM, self).__init__()
-        self.lstm = nn.LSTM(kernel_size * kernel_size * channel, channel, bidirectional=bidirectional)
+        self.lstm = nn.LSTM(channel, hidden_unit, bidirectional=bidirectional)
 
     def forward(self, x):
-        pass
+        return self.lstm(x)

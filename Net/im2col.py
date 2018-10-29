@@ -1,19 +1,16 @@
-import numpy as np
-import copy
+import torch.nn.functional as F
+import torch.nn as nn
 
 
-def im2col(raw_im, kernel_size, padding, stride):
-    """
-    :param im: Pytorch tensor, shape batch_size * channel * height * width
-    :param kernel_size: kernel size
-    :param padding: (height_padding. width_padding)
-    :param stride: (height_stride, width_stride)
-    :return:
-    """
-    im = copy.deepcopy(raw_im)
-    batch_size, channel, height, width = im.shape[0], im.shape[1], im.shape[2], im.shape[3]
-    if padding is not None:
-        im = np.pad(im, ((0, 0), (0, 0), (padding[0], padding[0]), (padding[1], padding[1])), 'constant')
-    result = np.zeros((batch_size, kernel_size[0] * kernel_size[1] * channel,
-                       ))
-    return im
+class Im2col(nn.Module):
+    def __init__(self, kernel_size, stride, padding):
+        super(Im2col, self).__init__()
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+
+    def forward(self, x):
+        height = x.shape[2]
+        x = F.unfold(x, self.kernel_size, padding=self.padding, stride=self.stride)
+        x = x.reshape((x.shape[0], x.shape[1], height, -1))
+        return x
