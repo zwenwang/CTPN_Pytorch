@@ -1,5 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
+import Net
+import numpy as np
 
 
 class VGG_16(nn.Module):
@@ -8,23 +10,23 @@ class VGG_16(nn.Module):
     """
     def __init__(self):
         super(VGG_16, self).__init__()
-        self.convolution1_1 = nn.Conv2d(3, 3, 64, padding=1)
-        self.convolution1_2 = nn.Conv2d(64, 3, 64, padding=1)
+        self.convolution1_1 = nn.Conv2d(3, 64, 3, padding=1)
+        self.convolution1_2 = nn.Conv2d(64, 64, 3, padding=1)
         self.pooling1 = nn.MaxPool2d(2, stride=2)
-        self.convolution2_1 = nn.Conv2d(64, 3, 128, padding=1)
-        self.convolution2_2 = nn.Conv2d(128, 3, 128, padding=1)
+        self.convolution2_1 = nn.Conv2d(64, 128, 3, padding=1)
+        self.convolution2_2 = nn.Conv2d(128, 128, 3, padding=1)
         self.pooling2 = nn.MaxPool2d(2, stride=2)
-        self.convolution3_1 = nn.Conv2d(128, 3, 256, padding=1)
-        self.convolution3_2 = nn.Conv2d(256, 3, 256, padding=1)
-        self.convolution3_3 = nn.Conv2d(256, 3, 256, padding=1)
+        self.convolution3_1 = nn.Conv2d(128, 256, 3, padding=1)
+        self.convolution3_2 = nn.Conv2d(256, 256, 3, padding=1)
+        self.convolution3_3 = nn.Conv2d(256, 256, 3, padding=1)
         self.pooling3 = nn.MaxPool2d(2, stride=2)
-        self.convolution4_1 = nn.Conv2d(256, 3, 512, padding=1)
-        self.convolution4_2 = nn.Conv2d(512, 3, 512, padding=1)
-        self.convolution4_3 = nn.Conv2d(512, 3, 512, padding=1)
+        self.convolution4_1 = nn.Conv2d(256, 512, 3, padding=1)
+        self.convolution4_2 = nn.Conv2d(512, 512, 3, padding=1)
+        self.convolution4_3 = nn.Conv2d(512, 512, 3, padding=1)
         self.pooling4 = nn.MaxPool2d(2, stride=2)
-        self.convolution5_1 = nn.Conv2d(512, 3, 512, padding=1)
-        self.convolution5_2 = nn.Conv2d(512, 3, 512, padding=1)
-        self.convolution5_3 = nn.Conv2d(512, 3, 512, padding=1)
+        self.convolution5_1 = nn.Conv2d(512, 512, 3, padding=1)
+        self.convolution5_2 = nn.Conv2d(512, 512, 3, padding=1)
+        self.convolution5_3 = nn.Conv2d(512, 512, 3, padding=1)
 
     def forward(self, x):
         x = F.relu(self.convolution1_1(x), inplace=True)
@@ -58,4 +60,37 @@ class BLSTM(nn.Module):
         self.lstm = nn.LSTM(channel, hidden_unit, bidirectional=bidirectional)
 
     def forward(self, x):
-        return self.lstm(x)
+        """
+        WARNING: The batch size of x must be 1.
+        """
+        x = x.transpose(1, 3)
+        recurrent, _ = self.lstm(x[0])
+        recurrent = recurrent[np.newaxis, :, :, :]
+        recurrent = recurrent.transpose(1, 3)
+        return recurrent
+
+
+class CTPN(nn.Module):
+    def __init__(self):
+        super(CTPN, self).__init__()
+        self.cnn = nn.Sequential()
+        self.cnn.add_module('VGG_16', VGG_16())
+        self.rnn = nn.Sequential()
+        self.rnn.add_module('im2col', Net.Im2col((3, 3), (1, 1), (1, 1)))
+        self.rnn.add_module('blstm', BLSTM(3 * 3 * 512, 128))
+        self.FC = nn.Conv2d(256, 512, 1)
+        self.vertical_coordinate = nn.Conv2d(512, 2 * 9, 1)
+        self.score = nn.Conv2d(512, 2 * 9, 1)
+        self.side_refinement = nn.Conv2d(512, 9, 1)
+
+    def forward(self, x):
+        x = self.cnn(x)
+        print(x.shape)
+        x = self.rnn(x)
+        print(x.shape)
+        x = self.FC(x)
+        print(x.shape)
+        vertical_pred = self.vertical_coordinate(x)
+        score = self.score(x)
+        side_refinement = self.side_refinement(x)
+        return vertical_pred, score, side_refinement
