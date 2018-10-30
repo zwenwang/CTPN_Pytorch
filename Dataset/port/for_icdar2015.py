@@ -12,9 +12,9 @@ def read_gt_file(path, have_BOM=False):
     for line in fp.readlines():
         pt = line.split(',')
         if have_BOM:
-            box = [pt[i].encode('utf-8') for i in range(8)]
+            box = [int(pt[i]) for i in range(8)]
         else:
-            box = [pt[i] for i in range(8)]
+            box = [int(pt[i]) for i in range(8)]
         result.append(box)
     fp.close()
     return result

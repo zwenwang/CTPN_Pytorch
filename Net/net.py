@@ -2,6 +2,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import Net
 import numpy as np
+import random
+import torch
+from torch.autograd import Variable
 
 
 class VGG_16(nn.Module):
@@ -85,12 +88,33 @@ class CTPN(nn.Module):
 
     def forward(self, x):
         x = self.cnn(x)
-        print(x.shape)
         x = self.rnn(x)
-        print(x.shape)
         x = self.FC(x)
-        print(x.shape)
         vertical_pred = self.vertical_coordinate(x)
         score = self.score(x)
         side_refinement = self.side_refinement(x)
         return vertical_pred, score, side_refinement
+
+
+class CTPN_Loss(nn.Module):
+    def __init__(self):
+        super(CTPN_Loss, self).__init__()
+        self.Ns = 128
+        self.ratio = 0.5
+        self.lambda1 = 1.0
+        self.lambda2 = 1.0
+        self.Ls_cls = nn.CrossEntropyLoss()
+        self.Lv_reg = nn.SmoothL1Loss()
+        self.Lo_reg = nn.SmoothL1Loss()
+
+    def forward(self, score, vertical_pred, side_refinement, positive, negative, vertical_reg):
+        positive_num = min(int(self.Ns * self.ratio), len(positive))
+        negative_num = self.Ns - positive_num
+        positive_batch = random.sample(positive, positive_num)
+        negative_batch = random.sample(negative, negative_num)
+        loss = 0
+        for p in positive_batch:
+            loss += self.Ls_cls(score[0, p[2] * 2: ((p[2] + 1) * 2), p[1], p[0]].unsqueeze(0), torch.LongTensor([1]))
+        for n in negative_batch:
+            loss += self.Ls_cls(score[0, n[2] * 2: ((n[2] + 1) * 2), n[1], n[0]].unsqueeze(0), torch.LongTensor([0]))
+        return loss / self.Ns

@@ -21,15 +21,11 @@ def draw_box_2pt(img, pt, color=(0, 255, 0), thickness=1):
     return img
 
 
-def draw_box_h_and_c(img, position, h, c, anchor_width=16, color=(0, 255, 0), thickness=1):
+def draw_box_h_and_c(img, position, cy, h, anchor_width=16, color=(0, 255, 0), thickness=1):
     x_left = position * anchor_width
     x_right = (position + 1) * anchor_width - 1
-    if h % 2 == 0:
-        y_bottom = c + h / 2
-        y_top = y_bottom + 1 - h
-    else:
-        y_top = c - (h - 1) / 2
-        y_bottom = c + (h - 1) / 2
+    y_top = int(cy - (float(h) - 1) / 2.0)
+    y_bottom = int(cy + (float(h) - 1) / 2.0)
     pt = [x_left, y_top, x_right, y_bottom]
     return draw_box_2pt(img, pt, color=color, thickness=thickness)
 

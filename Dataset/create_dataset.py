@@ -22,9 +22,9 @@ def scale_img(img, gt, shortest_side=600):
         scale_box = []
         for i in range(len(box)):
             if i % 2 == 0:
-                scale_box.append(str(int(int(box[i]) * w_scale)))
+                scale_box.append(int(int(box[i]) * w_scale))
             else:
-                scale_box.append(str(int(int(box[i]) * h_scale)))
+                scale_box.append(int(int(box[i]) * h_scale))
         scale_gt.append(scale_box)
     return img, scale_gt
 

@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 
 def cal_IoU(cy1, h1, cy2, h2):
@@ -20,24 +21,53 @@ def cal_IoU(cy1, h1, cy2, h2):
 
 
 def cal_y(cy, h):
-    if h % 2 == 0:
-        y_bottom = cy + h / 2
-        y_top = y_bottom - h + 1
-    else:
-        y_top = cy - (h - 1) / 2
-        y_bottom = cy + (h - 1) / 2
-    return int(y_top), int(y_bottom)
+    y_top = int(cy - (float(h) - 1) / 2.0)
+    y_bottom = int(cy + (float(h) - 1) / 2.0)
+    return y_top, y_bottom
+
+
+def valid_anchor(cy, h, height):
+    top, bottom = cal_y(cy, h)
+    if top < 0:
+        return False
+    if bottom > (height * 16 - 1):
+        return False
+    return True
 
 
 def tag_anchor(gt_anchor, cnn_output, gt_box):
     anchor_height = [11, 16, 22, 32, 46, 66, 94, 134, 191, 273]
-    height = cnn_output[2]
-    width = cnn_output[3]
-    positive = {'position': [], 'vc': [], 'vh': [], 'o': []}
-    negative = {'position': [], 'vc': [], 'vh': [], 'o': []}
+    height = cnn_output.shape[2]
+    width = cnn_output.shape[3]
+    positive = []
+    negative = []
+    vertical_reg = []
     x_left_side = min(gt_box[0], gt_box[6])
     x_right_side = max(gt_box[2], gt_box[4])
-    for p in gt_anchor['position']:
-        if p > (width - 1):
+    for a in gt_anchor:
+        if a[0] >= int(width - 1):
             continue
         iou = np.zeros((height, len(anchor_height)))
+        temp_positive = []
+        for i in range(iou.shape[0]):
+            for j in range(iou.shape[1]):
+                if not valid_anchor((float(i) * 16.0 + 7.5), anchor_height[j], height):
+                    continue
+                iou[i][j] = cal_IoU((float(i) * 16.0 + 7.5), anchor_height[j], a[1], a[2])
+                if iou[i][j] > 0.7:
+                    temp_positive.append((a[0], i, j, iou[i][j]))
+                if iou[i][j] < 0.5:
+                    negative.append((a[0], i, j, iou[i][j]))
+                if iou[i][j] > 0.5:
+                    vc = (a[1] - (float(i) * 16.0 + 7.5)) / float(anchor_height[j])
+                    vh = math.log10(float(a[2]) / float(anchor_height[j]))
+                    vertical_reg.append((a[0], i, j, vc, vh, iou[i][j]))
+        if len(temp_positive) == 0:
+            max_position = np.where(iou == np.max(iou))
+            temp_positive.append((a[0], max_position[0][0], max_position[1][0], np.max(iou)))
+            vc = (a[1] - (float(max_position[0][0]) * 16.0 + 7.5)) / float(anchor_height[max_position[1][0]])
+            vh = math.log10(float(a[2]) / float(anchor_height[max_position[1][0]]))
+            if np.max(iou) <= 0.5:
+                vertical_reg.append((a[0], max_position[0][0], max_position[1][0], vc, vh, np.max(iou)))
+        positive += temp_positive
+    return positive, negative, vertical_reg
