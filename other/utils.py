@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import base64
 import os
+import torch.nn.init as init
 
 
 def draw_box_4pt(img, pt, color=(0, 255, 0), thickness=1):
@@ -65,3 +66,4 @@ def bi_range(start, end):
         return range(end, start)
     else:
         return range(start, end)
+
