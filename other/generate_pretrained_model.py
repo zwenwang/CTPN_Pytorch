@@ -15,6 +15,9 @@ def generate_pretrained_model(net, output_path):
     for j in range((2 + 2 + 3 + 3 + 3) * 2):
         backbone_dict[check_list[1][j]] = pretrained_dict[check_list[0][j]]
     model_dict.update(backbone_dict)
+    # check model
+    # for k in range((2 + 2 + 3 + 3 + 3) * 2):
+    #     print((model_dict[model_dict.keys()[k]] == pretrained_dict[pretrained_dict.keys()[k]]).all())
     torch.save(model_dict, output_path)
 
 

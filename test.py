@@ -15,4 +15,4 @@ anchor_height = [11, 16, 22, 32, 46, 66, 94, 134, 191, 273]
 if __name__ == '__main__':
     a = torch.IntTensor([1, 2, 3])
     b = torch.IntTensor([1, 2, 3])
-    print(a == b)
+    print((a == b).all())

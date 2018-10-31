@@ -42,11 +42,26 @@ def tag_anchor(gt_anchor, cnn_output, gt_box):
     positive = []
     negative = []
     vertical_reg = []
+    side_refinement_reg = []
     x_left_side = min(gt_box[0], gt_box[6])
     x_right_side = max(gt_box[2], gt_box[4])
+    left_side = False
+    right_side = False
     for a in gt_anchor:
+
         if a[0] >= int(width - 1):
             continue
+
+        if x_left_side in range(a[0] * 16, (a[0] + 1) * 16):
+            left_side = True
+        else:
+            left_side = False
+
+        if x_right_side in range(a[0] * 16, (a[0] + 1) * 16):
+            right_side = True
+        else:
+            right_side = False
+
         iou = np.zeros((height, len(anchor_height)))
         temp_positive = []
         for i in range(iou.shape[0]):
@@ -54,20 +69,38 @@ def tag_anchor(gt_anchor, cnn_output, gt_box):
                 if not valid_anchor((float(i) * 16.0 + 7.5), anchor_height[j], height):
                     continue
                 iou[i][j] = cal_IoU((float(i) * 16.0 + 7.5), anchor_height[j], a[1], a[2])
+
                 if iou[i][j] > 0.7:
                     temp_positive.append((a[0], i, j, iou[i][j]))
+                    if left_side:
+                        o = (float(x_left_side) - (float(a[0]) * 16.0 + 7.5)) / 16.0
+                        side_refinement_reg.append((a[0], i, j, o))
+                    if right_side:
+                        o = (float(x_right_side) - (float(a[0]) * 16.0 + 7.5)) / 16.0
+                        side_refinement_reg.append((a[0], i, j, o))
+
                 if iou[i][j] < 0.5:
                     negative.append((a[0], i, j, iou[i][j]))
+
                 if iou[i][j] > 0.5:
                     vc = (a[1] - (float(i) * 16.0 + 7.5)) / float(anchor_height[j])
                     vh = math.log10(float(a[2]) / float(anchor_height[j]))
                     vertical_reg.append((a[0], i, j, vc, vh, iou[i][j]))
+
         if len(temp_positive) == 0:
             max_position = np.where(iou == np.max(iou))
             temp_positive.append((a[0], max_position[0][0], max_position[1][0], np.max(iou)))
-            vc = (a[1] - (float(max_position[0][0]) * 16.0 + 7.5)) / float(anchor_height[max_position[1][0]])
-            vh = math.log10(float(a[2]) / float(anchor_height[max_position[1][0]]))
+
+            if left_side:
+                o = (float(x_left_side) - (float(a[0]) * 16.0 + 7.5)) / 16.0
+                side_refinement_reg.append((a[0], max_position[0][0], max_position[1][0], o))
+            if right_side:
+                o = (float(x_right_side) - (float(a[0]) * 16.0 + 7.5)) / 16.0
+                side_refinement_reg.append((a[0], max_position[0][0], max_position[1][0], o))
+
             if np.max(iou) <= 0.5:
+                vc = (a[1] - (float(max_position[0][0]) * 16.0 + 7.5)) / float(anchor_height[max_position[1][0]])
+                vh = math.log10(float(a[2]) / float(anchor_height[max_position[1][0]]))
                 vertical_reg.append((a[0], max_position[0][0], max_position[1][0], vc, vh, np.max(iou)))
         positive += temp_positive
-    return positive, negative, vertical_reg
+    return positive, negative, vertical_reg, side_refinement_reg
