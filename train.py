@@ -5,14 +5,27 @@ import Dataset.port
 import Net
 import numpy as np
 import os
+import other
 
 
 if __name__ == '__main__':
+    no_grad = [
+        'cnn.VGG_16.convolution1_1.weight',
+        'cnn.VGG_16.convolution1_1.bias',
+        'cnn.VGG_16.convolution1_2.weight',
+        'cnn.VGG_16.convolution1_2.bias'
+    ]
     epoch = 10
     net = Net.CTPN()
-    for p in net.parameters():
-        p.requires_grad = True
+    for name, value in net.named_parameters():
+        if name in no_grad:
+            value.requires_grad = False
+        else:
+            value.requires_grad = True
+    # for name, value in net.named_parameters():
+    #     print('name: {0}, grad: {1}'.format(name, value.requires_grad))
     net.load_state_dict(torch.load('./model/vgg16.model'))
+    other.init_weight(net)
     net.cuda()
     net.train()
     print(net)
@@ -75,3 +88,4 @@ if __name__ == '__main__':
                 total_cls_loss = 0
                 total_v_reg_loss = 0
                 total_o_reg_loss = 0
+        torch.save(net.state_dict(), './model/ctpn-epoch{0}'.format(i))

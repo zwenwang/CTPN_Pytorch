@@ -2,9 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import Net
 import numpy as np
-import random
 import torch
-from torch.autograd import Variable
 
 
 class VGG_16(nn.Module):
@@ -53,19 +51,14 @@ class VGG_16(nn.Module):
 
 
 class BLSTM(nn.Module):
-    def __init__(self, channel, hidden_unit, weight_init=False, bidirectional=True):
+    def __init__(self, channel, hidden_unit, bidirectional=True):
         """
         :param channel: lstm input channel num
         :param hidden_unit: lstm hidden unit
         :param bidirectional:
-        :param weight_init: use Gaussian distribution to init weight or not
         """
         super(BLSTM, self).__init__()
         self.lstm = nn.LSTM(channel, hidden_unit, bidirectional=bidirectional)
-        if weight_init:
-            for i in range(len(self.lstm.all_weights)):
-                for j in range(len(self.lstm.all_weights[0])):
-                    torch.nn.init.normal_(self.lstm.all_weights[i][j], std=0.01)
 
     def forward(self, x):
         """
@@ -79,39 +72,32 @@ class BLSTM(nn.Module):
 
 
 class CTPN(nn.Module):
-    def __init__(self, weight_init=False):
-        """
-        :param weight_init: use Gaussian distribution to init weight or not
-        """
+    def __init__(self, val=False):
         super(CTPN, self).__init__()
         self.cnn = nn.Sequential()
         self.cnn.add_module('VGG_16', VGG_16())
         self.rnn = nn.Sequential()
         self.rnn.add_module('im2col', Net.Im2col((3, 3), (1, 1), (1, 1)))
-        self.rnn.add_module('blstm', BLSTM(3 * 3 * 512, 128, weight_init=True))
+        self.rnn.add_module('blstm', BLSTM(3 * 3 * 512, 128))
         self.FC = nn.Conv2d(256, 512, 1)
         self.vertical_coordinate = nn.Conv2d(512, 2 * 10, 1)
         self.score = nn.Conv2d(512, 2 * 10, 1)
         self.side_refinement = nn.Conv2d(512, 10, 1)
-        if weight_init:
-            torch.nn.init.normal_(self.FC.weight, mean=0, std=0.01)
-            torch.nn.init.constant_(self.FC.bias, val=0)
 
-            torch.nn.init.normal_(self.vertical_coordinate.weight, mean=0, std=0.01)
-            torch.nn.init.constant_(self.vertical_coordinate.bias, val=0)
-
-            torch.nn.init.normal_(self.score.weight, mean=0, std=0.01)
-            torch.nn.init.constant_(self.score.bias, val=0)
-
-            torch.nn.init.normal_(self.side_refinement.weight, mean=0, std=0.01)
-            torch.nn.init.constant_(self.side_refinement.bias, val=0)
-
-    def forward(self, x):
+    def forward(self, x, val=False):
         x = self.cnn(x)
         x = self.rnn(x)
         x = self.FC(x)
         x = F.relu(x, inplace=True)
         vertical_pred = self.vertical_coordinate(x)
         score = self.score(x)
+        if val:
+            score = score.reshape((score.shape[0], 10, 2, score.shape[2], score.shape[3]))
+            score = score.transpose(1, 2)
+            score = score.transpose(2, 3)
+            score = score.transpose(3, 4)
+            score = score.squeeze(0)
+            score = score.reshape(2, -1)
+            score = F.softmax(score)
         side_refinement = self.side_refinement(x)
         return vertical_pred, score, side_refinement
