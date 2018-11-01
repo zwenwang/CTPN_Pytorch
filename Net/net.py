@@ -72,7 +72,7 @@ class BLSTM(nn.Module):
 
 
 class CTPN(nn.Module):
-    def __init__(self, val=False):
+    def __init__(self):
         super(CTPN, self).__init__()
         self.cnn = nn.Sequential()
         self.cnn.add_module('VGG_16', VGG_16())
@@ -93,11 +93,11 @@ class CTPN(nn.Module):
         score = self.score(x)
         if val:
             score = score.reshape((score.shape[0], 10, 2, score.shape[2], score.shape[3]))
+            score = score.squeeze(0)
             score = score.transpose(1, 2)
             score = score.transpose(2, 3)
-            score = score.transpose(3, 4)
-            score = score.squeeze(0)
-            score = score.reshape(2, -1)
-            score = F.softmax(score)
+            score = score.reshape((-1, 2))
+            score = F.softmax(score, dim=1)
+            score = score.reshape((10, vertical_pred.shape[2], -1, 2))
         side_refinement = self.side_refinement(x)
         return vertical_pred, score, side_refinement
