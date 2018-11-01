@@ -4,3 +4,5 @@
 *.pyc
 model
 *.model
+*.txt
+*.jpg

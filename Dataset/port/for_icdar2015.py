@@ -30,8 +30,7 @@ def create_dataset_icdar2015(img_root, gt_root, output_path):
         gt_path = os.path.join(gt_root, gt_name)
         if not os.path.exists(gt_path):
             print('Ground truth file of image {0} not exists.'.format(im))
-        gt_data = read_gt_file(gt_path, have_BOM=True)
         im_path_list.append(os.path.join(img_root, im))
-        gt_list.append(gt_data)
+        gt_list.append(gt_path)
     assert len(im_path_list) == len(gt_list)
     Dataset.create_dataset(output_path, im_path_list, gt_list)

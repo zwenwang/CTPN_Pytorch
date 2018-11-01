@@ -2,6 +2,7 @@ import os
 import lmdb
 import cv2
 import other
+import Net
 
 
 def scale_img(img, gt, shortest_side=600):
@@ -44,7 +45,7 @@ def write_cache(env, data):
             e.put(i, l)
 
 
-def list2str(l):
+def box_list2str(l):
     result = []
     for box in l:
         if not len(box) % 8 == 0:
@@ -55,6 +56,7 @@ def list2str(l):
 
 def create_dataset(output_path, img_list, gt_list):
     assert len(img_list) == len(gt_list)
+    net = Net.VGG_16()
     num = len(img_list)
     if not os.path.exists(output_path):
         os.makedirs(output_path)
@@ -78,7 +80,7 @@ def create_dataset(output_path, img_list, gt_list):
             continue
 
         img, gt = scale_img(img, gt)
-        gt_str = list2str(gt)
+        gt_str = box_list2str(gt)
         if not gt_str[1]:
             print("Ground truth of {0} is not valid.".format(img_path))
             continue
