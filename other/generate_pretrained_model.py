@@ -3,7 +3,7 @@ import torchvision.models as models
 import Net
 
 
-def generate_pretrained_model(net, output_path):
+def generate_VGG_16_model(net, output_path):
     vgg_16 = models.vgg16(pretrained=True)
     pretrained_dict = vgg_16.state_dict()
     model_dict = net.state_dict()
@@ -22,4 +22,4 @@ def generate_pretrained_model(net, output_path):
 
 
 if __name__ == '__main__':
-    generate_pretrained_model(Net.CTPN(), './vgg16.model')
+    generate_VGG_16_model(Net.CTPN(), './vgg16.model')

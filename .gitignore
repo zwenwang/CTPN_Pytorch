@@ -6,3 +6,9 @@ model
 *.model
 *.txt
 *.jpg
+.MSRA-TD500
+*.gt
+*.JPG
+*.doc
+train_data
+
