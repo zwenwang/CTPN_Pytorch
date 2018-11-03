@@ -11,4 +11,5 @@ model
 *.JPG
 *.doc
 train_data
+*.zip
 
