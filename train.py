@@ -52,15 +52,19 @@ if __name__ == '__main__':
             for im in im_list[j]:
                 name, _ = os.path.splitext(im)
                 gt_name = 'gt_' + name + '.txt'
-                gt_path = os.path.join(gt_root, gt_name)
+                if j == 0:
+                    gt_path = os.path.join(gt_root, gt_name)
+                else:
+                    gt_path = os.path.join(gt_root1, gt_name)
                 if not os.path.exists(gt_path):
                     print('Ground truth file of image {0} not exists.'.format(im))
 
-                img = cv2.imread(os.path.join(img_root, im))
                 if j == 0:
                     gt_txt = Dataset.port.read_gt_file(gt_path, have_BOM=True)
+                    img = cv2.imread(os.path.join(img_root, im))
                 else:
                     gt_txt = Dataset.port.read_gt_file(gt_path)
+                    img = cv2.imread(os.path.join(img_root1, im))
                 img, gt_txt = Dataset.scale_img(img, gt_txt)
                 tensor_img = img[np.newaxis, :, :, :]
                 tensor_img = tensor_img.transpose((0, 3, 1, 2))
