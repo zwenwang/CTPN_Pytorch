@@ -21,6 +21,7 @@ if __name__ == '__main__':
     display_img_name = cf.getboolean('global', 'display_file_name')
     display_iter = cf.getint('global', 'display_iter')
     val_iter = cf.getint('global', 'val_iter')
+    save_iter = cf.getint('global', 'save_iter')
     print('Using gpu id(available if use cuda): {0}'.format(gpu_id))
     print('Train epoch: {0}'.format(epoch))
     print('Use CUDA: {0}'.format(using_cuda))
@@ -149,4 +150,7 @@ if __name__ == '__main__':
                     net.train()
                     start_time = time.time()
 
-        torch.save(net.state_dict(), './model/ctpn-epoch{0}'.format(i))
+                if iteration % save_iter == 0:
+                    torch.save(net.state_dict(), './model/ctpn-{0}-{1}'.format(i, iteration))
+
+        torch.save(net.state_dict(), './model/ctpn-{0}-end'.format(i))

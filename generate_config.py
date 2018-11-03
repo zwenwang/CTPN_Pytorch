@@ -10,5 +10,6 @@ if __name__ == '__main__':
     cp.set('global', 'display_file_name', 'False')
     cp.set('global', 'display_iter', '10')
     cp.set('global', 'val_iter', '30')
+    cp.set('global', 'save_iter', '100')
     with open('./config', 'w') as fp:
         cp.write(fp)
