@@ -48,10 +48,6 @@ if __name__ == '__main__':
         total_cls_loss = 0
         total_v_reg_loss = 0
         total_o_reg_loss = 0
-        if i >= 9:
-            optimizer = optim.SGD(net.parameters(), lr=0.0001, momentum=0.9, weight_decay=0.0005)
-        else:
-            optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9, weight_decay=0.0005)
         for j in range(len(im_list)):
             for im in im_list[j]:
                 name, _ = os.path.splitext(im)
@@ -82,6 +78,11 @@ if __name__ == '__main__':
                     negative += negative1
                     vertical_reg += vertical_reg1
                     side_refinement_reg += side_refinement_reg1
+
+                if i >= 9:
+                    optimizer = optim.SGD(net.parameters(), lr=0.0001, momentum=0.9, weight_decay=0.0005)
+                else:
+                    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9, weight_decay=0.0005)
 
                 optimizer.zero_grad()
                 loss, cls_loss, v_reg_loss, o_reg_loss = criterion(score, vertical_pred, side_refinement, positive,
