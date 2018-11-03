@@ -76,14 +76,16 @@ if __name__ == '__main__':
                     gt_path = os.path.join(gt_root1, gt_name)
                 if not os.path.exists(gt_path):
                     print('Ground truth file of image {0} not exists.'.format(im))
+                    continue
 
-                print(os.path.join(img_root, im))
                 if j == 1:
                     gt_txt = Dataset.port.read_gt_file(gt_path, have_BOM=True)
                     img = cv2.imread(os.path.join(img_root, im))
+                    print(os.path.join(img_root, im))
                 else:
                     gt_txt = Dataset.port.read_gt_file(gt_path)
                     img = cv2.imread(os.path.join(img_root1, im))
+                    print(os.path.join(img_root1, im))
                 img, gt_txt = Dataset.scale_img(img, gt_txt)
                 tensor_img = img[np.newaxis, :, :, :]
                 tensor_img = tensor_img.transpose((0, 3, 1, 2))
