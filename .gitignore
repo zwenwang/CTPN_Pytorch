@@ -2,7 +2,7 @@
 
 *.iml
 *.pyc
-model
+./model
 *.model
 *.txt
 *.jpg
@@ -10,6 +10,6 @@ model
 *.gt
 *.JPG
 *.doc
-train_data
+./train_data
 *.zip
 
