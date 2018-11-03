@@ -1,5 +1,5 @@
 import os
-import lmdb
+# import lmdb
 import cv2
 import other
 import Net
@@ -54,46 +54,46 @@ def box_list2str(l):
     return '|'.join(result), True
 
 
-def create_dataset(output_path, img_list, gt_list):
-    assert len(img_list) == len(gt_list)
-    net = Net.VGG_16()
-    num = len(img_list)
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-    env = lmdb.open(output_path, map_size=1099511627776)
-    cache = {}
-    counter = 1
-    for i in range(num):
-        img_path = img_list[i]
-        gt = gt_list[i]
-        if not os.path.exists(img_path):
-            print("{0} is not exist.".format(img_path))
-            continue
-
-        if len(gt) == 0:
-            print("Ground truth of {0} is not exist.".format(img_path))
-            continue
-
-        img = cv2.imread(img_path)
-        if not check_img(img):
-            print('Image {0} is not valid.'.format(img_path))
-            continue
-
-        img, gt = scale_img(img, gt)
-        gt_str = box_list2str(gt)
-        if not gt_str[1]:
-            print("Ground truth of {0} is not valid.".format(img_path))
-            continue
-
-        img_key = 'image-%09d' % counter
-        gt_key = 'gt-%09d' % counter
-        cache[img_key] = other.np_img2base64(img, img_path)
-        cache[gt_key] = gt_str[0]
-        counter += 1
-        if counter % 100 == 0:
-            write_cache(env, cache)
-            cache.clear()
-            print('Written {0}/{1}'.format(counter, num))
-    cache['num'] = str(counter - 1)
-    write_cache(env, cache)
-    print('Create dataset with {0} image.'.format(counter - 1))
+# def create_dataset(output_path, img_list, gt_list):
+#     assert len(img_list) == len(gt_list)
+#     net = Net.VGG_16()
+#     num = len(img_list)
+#     if not os.path.exists(output_path):
+#         os.makedirs(output_path)
+#     env = lmdb.open(output_path, map_size=1099511627776)
+#     cache = {}
+#     counter = 1
+#     for i in range(num):
+#         img_path = img_list[i]
+#         gt = gt_list[i]
+#         if not os.path.exists(img_path):
+#             print("{0} is not exist.".format(img_path))
+#             continue
+#
+#         if len(gt) == 0:
+#             print("Ground truth of {0} is not exist.".format(img_path))
+#             continue
+#
+#         img = cv2.imread(img_path)
+#         if not check_img(img):
+#             print('Image {0} is not valid.'.format(img_path))
+#             continue
+#
+#         img, gt = scale_img(img, gt)
+#         gt_str = box_list2str(gt)
+#         if not gt_str[1]:
+#             print("Ground truth of {0} is not valid.".format(img_path))
+#             continue
+#
+#         img_key = 'image-%09d' % counter
+#         gt_key = 'gt-%09d' % counter
+#         cache[img_key] = other.np_img2base64(img, img_path)
+#         cache[gt_key] = gt_str[0]
+#         counter += 1
+#         if counter % 100 == 0:
+#             write_cache(env, cache)
+#             cache.clear()
+#             print('Written {0}/{1}'.format(counter, num))
+#     cache['num'] = str(counter - 1)
+#     write_cache(env, cache)
+#     print('Create dataset with {0} image.'.format(counter - 1))
