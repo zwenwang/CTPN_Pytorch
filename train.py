@@ -7,6 +7,7 @@ import numpy as np
 import os
 import other
 import ConfigParser
+import time
 
 
 if __name__ == '__main__':
@@ -16,6 +17,8 @@ if __name__ == '__main__':
     gpu_id = cf.get('global', 'gpu_id')
     epoch = cf.getint('global', 'epoch')
     using_cuda = cf.getboolean('global', 'using_cuda')
+    display_img_name = cf.getboolean('global', 'display_img_name')
+    display_iter = cf.getboolean('global', 'display_iter')
     print('Using gpu id(available if use cuda): {0}'.format(gpu_id))
     print('Train epoch: {0}'.format(epoch))
     print('Use CUDA: {0}'.format(using_cuda))
@@ -66,6 +69,7 @@ if __name__ == '__main__':
         total_cls_loss = 0
         total_v_reg_loss = 0
         total_o_reg_loss = 0
+        start_time = time.time()
         for j in range(len(im_list)):
             for im in im_list[j]:
                 name, _ = os.path.splitext(im)
@@ -81,11 +85,13 @@ if __name__ == '__main__':
                 if j == 1:
                     gt_txt = Dataset.port.read_gt_file(gt_path, have_BOM=True)
                     img = cv2.imread(os.path.join(img_root, im))
-                    print(os.path.join(img_root, im))
+                    if display_img_name:
+                        print(os.path.join(img_root, im))
                 else:
                     gt_txt = Dataset.port.read_gt_file(gt_path)
                     img = cv2.imread(os.path.join(img_root1, im))
-                    print(os.path.join(img_root1, im))
+                    if display_img_name:
+                        print(os.path.join(img_root1, im))
                 img, gt_txt = Dataset.scale_img(img, gt_txt)
                 tensor_img = img[np.newaxis, :, :, :]
                 tensor_img = tensor_img.transpose((0, 3, 1, 2))
@@ -118,15 +124,19 @@ if __name__ == '__main__':
                 total_v_reg_loss += v_reg_loss
                 total_o_reg_loss += o_reg_loss
                 if iteration % 10 == 0:
+                    end_time = time.time()
+                    total_time = end_time - start_time
                     print('Epoch: {2}/{3}, Iteration: {0}/{1}'.format(iteration, total_iter, i, epoch))
                     print('loss: {0}'.format(total_loss / 10.0))
                     print('classification loss: {0}'.format(total_cls_loss / 10.0))
                     print('vertical regression loss: {0}'.format(total_v_reg_loss / 10.0))
                     print('side-refinement regression loss: {0}'.format(total_o_reg_loss / 10.0))
+                    print('10 iterations for {0}'.format(total_time))
                     print('\n')
                     total_loss = 0
                     total_cls_loss = 0
                     total_v_reg_loss = 0
                     total_o_reg_loss = 0
+                    start_time = time.time()
 
         torch.save(net.state_dict(), './model/ctpn-epoch{0}'.format(i))
