@@ -13,3 +13,4 @@
 ./train_data
 *.zip
 ./val_data
+config
