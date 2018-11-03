@@ -17,7 +17,7 @@ if __name__ == '__main__':
     gpu_id = cf.get('global', 'gpu_id')
     epoch = cf.getint('global', 'epoch')
     using_cuda = cf.getboolean('global', 'using_cuda')
-    display_img_name = cf.getboolean('global', 'display_img_name')
+    display_img_name = cf.getboolean('global', 'display_file_name')
     display_iter = cf.getboolean('global', 'display_iter')
     print('Using gpu id(available if use cuda): {0}'.format(gpu_id))
     print('Train epoch: {0}'.format(epoch))
