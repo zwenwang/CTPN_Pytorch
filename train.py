@@ -16,9 +16,9 @@ if __name__ == '__main__':
     gpu_id = cf.get('global', 'gpu_id')
     epoch = cf.getint('global', 'epoch')
     using_cuda = cf.getboolean('global', 'using_cuda')
-    print(gpu_id)
-    print(epoch)
-    print(using_cuda)
+    print('Using gpu id(available if use cuda): {0}'.format(gpu_id))
+    print('Train epoch: {0}'.format(epoch))
+    print('Use CUDA: {0}'.format(using_cuda))
 
     os.environ['CUDA_VISIBLE_DEVICES'] = gpu_id
     no_grad = [
