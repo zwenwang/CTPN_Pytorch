@@ -18,7 +18,7 @@ if __name__ == '__main__':
     ]
     epoch = 12
     lr = 0.001
-    using_cuda = False
+    using_cuda = True
     net = Net.CTPN()
     for name, value in net.named_parameters():
         if name in no_grad:
