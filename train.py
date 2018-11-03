@@ -18,6 +18,7 @@ if __name__ == '__main__':
     ]
     epoch = 12
     lr = 0.001
+    using_cuda = False
     net = Net.CTPN()
     for name, value in net.named_parameters():
         if name in no_grad:
@@ -28,11 +29,12 @@ if __name__ == '__main__':
     #     print('name: {0}, grad: {1}'.format(name, value.requires_grad))
     net.load_state_dict(torch.load('./model/vgg16.model'))
     other.init_weight(net)
-    net.cuda()
+    if using_cuda:
+        net.cuda()
     net.train()
     print(net)
 
-    criterion = Net.CTPN_Loss()
+    criterion = Net.CTPN_Loss(using_cuda=using_cuda)
 
     img_root = './train_data/train_img'
     gt_root = './train_data/train_gt'
@@ -76,7 +78,10 @@ if __name__ == '__main__':
                 img, gt_txt = Dataset.scale_img(img, gt_txt)
                 tensor_img = img[np.newaxis, :, :, :]
                 tensor_img = tensor_img.transpose((0, 3, 1, 2))
-                tensor_img = torch.FloatTensor(tensor_img).cuda()
+                if using_cuda:
+                    tensor_img = torch.FloatTensor(tensor_img).cuda()
+                else:
+                    tensor_img = torch.FloatTensor(tensor_img)
 
                 vertical_pred, score, side_refinement = net(tensor_img)
                 positive = []
