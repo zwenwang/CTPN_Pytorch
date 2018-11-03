@@ -17,7 +17,7 @@ def val(net, criterion, batch_num, using_cuda):
     total_v_reg_loss = 0
     total_o_reg_loss = 0
     start_time = time.time()
-    for im in random.sample(batch_num, img_list):
+    for im in random.sample(img_list, batch_num):
         name, _ = os.path.splitext(im)
         gt_name = 'gt_' + name + '.txt'
         gt_path = os.path.join(gt_root, gt_name)
