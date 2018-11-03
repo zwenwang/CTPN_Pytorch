@@ -8,6 +8,7 @@ import os
 import other
 
 
+os.environ['CUDA_VISIBLE_DEVICES'] = '6'
 if __name__ == '__main__':
     no_grad = [
         'cnn.VGG_16.convolution1_1.weight',
