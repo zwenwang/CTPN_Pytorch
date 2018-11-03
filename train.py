@@ -8,6 +8,7 @@ import os
 import other
 import ConfigParser
 import time
+import val_func
 
 
 if __name__ == '__main__':
@@ -19,6 +20,7 @@ if __name__ == '__main__':
     using_cuda = cf.getboolean('global', 'using_cuda')
     display_img_name = cf.getboolean('global', 'display_file_name')
     display_iter = cf.getboolean('global', 'display_iter')
+    val_iter = cf.getint('global', 'val_iter')
     print('Using gpu id(available if use cuda): {0}'.format(gpu_id))
     print('Train epoch: {0}'.format(epoch))
     print('Use CUDA: {0}'.format(using_cuda))
@@ -31,6 +33,7 @@ if __name__ == '__main__':
         'cnn.VGG_16.convolution1_2.bias'
     ]
     lr = 0.001
+
     net = Net.CTPN()
     for name, value in net.named_parameters():
         if name in no_grad:
@@ -123,7 +126,8 @@ if __name__ == '__main__':
                 total_cls_loss += cls_loss
                 total_v_reg_loss += v_reg_loss
                 total_o_reg_loss += o_reg_loss
-                if iteration % 10 == 0:
+
+                if iteration % display_iter == 0:
                     end_time = time.time()
                     total_time = end_time - start_time
                     print('Epoch: {2}/{3}, Iteration: {0}/{1}'.format(iteration, total_iter, i, epoch))
@@ -131,12 +135,18 @@ if __name__ == '__main__':
                     print('classification loss: {0}'.format(total_cls_loss / 10.0))
                     print('vertical regression loss: {0}'.format(total_v_reg_loss / 10.0))
                     print('side-refinement regression loss: {0}'.format(total_o_reg_loss / 10.0))
-                    print('10 iterations for {0}'.format(total_time))
+                    print('{1} iterations for {0}'.format(total_time, display_iter))
                     print('\n')
                     total_loss = 0
                     total_cls_loss = 0
                     total_v_reg_loss = 0
                     total_o_reg_loss = 0
+                    start_time = time.time()
+
+                if iteration % val_iter == 0:
+                    net.eval()
+                    val_func.val(net, criterion, 10, using_cuda)
+                    net.train()
                     start_time = time.time()
 
         torch.save(net.state_dict(), './model/ctpn-epoch{0}'.format(i))

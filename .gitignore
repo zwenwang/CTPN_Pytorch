@@ -12,4 +12,4 @@
 *.doc
 ./train_data
 *.zip
-
+./val_data
