@@ -1,0 +1,12 @@
+[global]
+using_cuda=True
+epoch=12
+gpu_id=0
+
+[img_root]
+1=./train_data/train_img
+2=./train_data/img
+
+[gt_root]
+1=./train_data/train_gt
+2=./train_data/gt

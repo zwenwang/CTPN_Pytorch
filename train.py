@@ -6,19 +6,28 @@ import Net
 import numpy as np
 import os
 import other
+import ConfigParser
 
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 if __name__ == '__main__':
+    cf = ConfigParser.ConfigParser()
+    cf.read('./config')
+
+    gpu_id = cf.get('global', 'gpu_id')
+    epoch = cf.getint('global', 'epoch')
+    using_cuda = cf.getboolean('global', 'using_cuda')
+    print(gpu_id)
+    print(epoch)
+    print(using_cuda)
+
+    os.environ['CUDA_VISIBLE_DEVICES'] = gpu_id
     no_grad = [
         'cnn.VGG_16.convolution1_1.weight',
         'cnn.VGG_16.convolution1_1.bias',
         'cnn.VGG_16.convolution1_2.weight',
         'cnn.VGG_16.convolution1_2.bias'
     ]
-    epoch = 12
     lr = 0.001
-    using_cuda = True
     net = Net.CTPN()
     for name, value in net.named_parameters():
         if name in no_grad:
