@@ -11,6 +11,8 @@ import time
 import val_func
 import logging
 import datetime
+import copy
+import random
 
 
 if __name__ == '__main__':
@@ -96,7 +98,9 @@ if __name__ == '__main__':
         total_o_reg_loss = 0
         start_time = time.time()
         for j in range(len(im_list)):
-            for im in im_list[j]:
+            random_im_list = random.shuffle(copy.deepcopy(im_list[j]))
+
+            for im in random_im_list:
                 name, _ = os.path.splitext(im)
                 gt_name = 'gt_' + name + '.txt'
                 if j == 1:
