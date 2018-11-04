@@ -8,7 +8,7 @@ import time
 import random
 
 
-def val(net, criterion, batch_num, using_cuda):
+def val(net, criterion, batch_num, using_cuda, logger):
     img_root = './val_data/test_image'
     gt_root = './val_data/test_gt'
     img_list = os.listdir(img_root)
@@ -58,9 +58,17 @@ def val(net, criterion, batch_num, using_cuda):
     total_time = end_time - start_time
     print('####################  Start evaluate  ####################')
     print('loss: {0}'.format(total_loss / float(batch_num)))
+    logger.info('Evaluate loss: {0}'.format(total_loss / float(batch_num)))
+
     print('classification loss: {0}'.format(total_cls_loss / float(batch_num)))
+    logger.info('Evaluate vertical regression loss: {0}'.format(total_v_reg_loss / float(batch_num)))
+
     print('vertical regression loss: {0}'.format(total_v_reg_loss / float(batch_num)))
+    logger.info('Evaluate side-refinement regression loss: {0}'.format(total_o_reg_loss / float(batch_num)))
+
     print('side-refinement regression loss: {0}'.format(total_o_reg_loss / float(batch_num)))
-    print('{1} iterations for {0}'.format(total_time, batch_num))
+    logger.info('Evaluate side-refinement regression loss: {0}'.format(total_o_reg_loss / float(batch_num)))
+
+    print('{1} iterations for {0} seconds.'.format(total_time, batch_num))
     print('#####################  Evaluate end  #####################')
     print('\n')

@@ -9,19 +9,41 @@ import other
 import ConfigParser
 import time
 import val_func
+import logging
+import datetime
 
 
 if __name__ == '__main__':
     cf = ConfigParser.ConfigParser()
     cf.read('./config')
 
+    log_dir = './logs'
+
+    if not os.path.exists(log_dir):
+        os.mkdir(log_dir)
+
+    logger = logging.getLogger(__name__)
+    logger.setLevel(level=logging.DEBUG)
+    log_file_name = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S') + '.log'
+    log_handler = logging.FileHandler(os.path.join(log_dir, log_file_name), 'w')
+    log_format = formatter = logging.Formatter('%(asctime)s: %(message)s')
+    log_handler.setFormatter(log_format)
+    logger.addHandler(log_handler)
+
     gpu_id = cf.get('global', 'gpu_id')
     epoch = cf.getint('global', 'epoch')
+    logger.info('Total epoch: {0}'.format(epoch))
+
     using_cuda = cf.getboolean('global', 'using_cuda')
     display_img_name = cf.getboolean('global', 'display_file_name')
     display_iter = cf.getint('global', 'display_iter')
     val_iter = cf.getint('global', 'val_iter')
     save_iter = cf.getint('global', 'save_iter')
+
+    lr_front = cf.getfloat('parameter', 'lr_front')
+    lr_behind = cf.getfloat('parameter', 'lr_behind')
+    change_epoch = cf.getint('parameter', 'change_epoch') - 1
+    logger.info('Learning rate: {0}, {1}, change epoch: {2}'.format(lr_front, lr_behind, change_epoch + 1))
     print('Using gpu id(available if use cuda): {0}'.format(gpu_id))
     print('Train epoch: {0}'.format(epoch))
     print('Use CUDA: {0}'.format(using_cuda))
@@ -33,7 +55,6 @@ if __name__ == '__main__':
         'cnn.VGG_16.convolution1_2.weight',
         'cnn.VGG_16.convolution1_2.bias'
     ]
-    lr = 0.001
 
     net = Net.CTPN()
     for name, value in net.named_parameters():
@@ -62,12 +83,12 @@ if __name__ == '__main__':
     im_list.append(os.listdir(img_root1))
     im_list.append(os.listdir(img_root))
     total_iter = len(im_list[0]) + len(im_list[1])
-    optimizer = optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=0.0005)
     for i in range(epoch):
-        if i >= 9:
-            lr = 0.0001
+        if i >= change_epoch:
+            lr = lr_behind
         else:
-            lr = 0.001
+            lr = lr_front
+        optimizer = optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=0.0005)
         iteration = 1
         total_loss = 0
         total_cls_loss = 0
@@ -132,11 +153,21 @@ if __name__ == '__main__':
                     end_time = time.time()
                     total_time = end_time - start_time
                     print('Epoch: {2}/{3}, Iteration: {0}/{1}'.format(iteration, total_iter, i, epoch))
-                    print('loss: {0}'.format(total_loss / 10.0))
-                    print('classification loss: {0}'.format(total_cls_loss / 10.0))
-                    print('vertical regression loss: {0}'.format(total_v_reg_loss / 10.0))
-                    print('side-refinement regression loss: {0}'.format(total_o_reg_loss / 10.0))
-                    print('{1} iterations for {0}'.format(total_time, display_iter))
+                    logger.info('Epoch: {2}/{3}, Iteration: {0}/{1}'.format(iteration, total_iter, i, epoch))
+
+                    print('loss: {0}'.format(total_loss / display_iter))
+                    logger.info('loss: {0}'.format(total_loss / display_iter))
+
+                    print('classification loss: {0}'.format(total_cls_loss / display_iter))
+                    logger.info('classification loss: {0}'.format(total_cls_loss / display_iter))
+
+                    print('vertical regression loss: {0}'.format(total_v_reg_loss / display_iter))
+                    logger.info('vertical regression loss: {0}'.format(total_v_reg_loss / display_iter))
+
+                    print('side-refinement regression loss: {0}'.format(total_o_reg_loss / display_iter))
+                    logger.info('side-refinement regression loss: {0}'.format(total_o_reg_loss / display_iter))
+
+                    print('{1} iterations for {0} seconds.'.format(int(total_time), display_iter))
                     print('\n')
                     total_loss = 0
                     total_cls_loss = 0
@@ -146,11 +177,15 @@ if __name__ == '__main__':
 
                 if iteration % val_iter == 0:
                     net.eval()
-                    val_func.val(net, criterion, 10, using_cuda)
+                    logger.info('Start evaluate at {0} epoch {1} iteration.'.format(i, iteration))
+                    val_func.val(net, criterion, 10, using_cuda, logger)
+                    logger.info('End evaluate.')
                     net.train()
                     start_time = time.time()
 
                 if iteration % save_iter == 0:
-                    torch.save(net.state_dict(), './model/ctpn-{0}-{1}'.format(i, iteration))
+                    print('Model saved at ./model/ctpn-{0}-{1}.model'.format(i, iteration))
+                    torch.save(net.state_dict(), './model/ctpn-{0}-{1}.model'.format(i, iteration))
 
-        torch.save(net.state_dict(), './model/ctpn-{0}-end'.format(i))
+        print('Model saved at ./model/ctpn-{0}-end.model'.format(i))
+        torch.save(net.state_dict(), './model/ctpn-{0}-end.model'.format(i))
