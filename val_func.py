@@ -36,6 +36,7 @@ def val(net, criterion, batch_num, using_cuda, logger):
             tensor_img = torch.FloatTensor(tensor_img)
 
         vertical_pred, score, side_refinement = net(tensor_img)
+        del tensor_img
         positive = []
         negative = []
         vertical_reg = []
