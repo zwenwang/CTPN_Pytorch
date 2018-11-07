@@ -45,6 +45,9 @@ if __name__ == '__main__':
     lr_front = cf.getfloat('parameter', 'lr_front')
     lr_behind = cf.getfloat('parameter', 'lr_behind')
     change_epoch = cf.getint('parameter', 'change_epoch') - 1
+
+    pretrained = cf.getboolean('global', 'pretrained')
+    pretrained_model = cf.get('global', 'pretrained_model')
     logger.info('Learning rate: {0}, {1}, change epoch: {2}'.format(lr_front, lr_behind, change_epoch + 1))
     print('Using gpu id(available if use cuda): {0}'.format(gpu_id))
     print('Train epoch: {0}'.format(epoch))
@@ -59,15 +62,21 @@ if __name__ == '__main__':
     ]
 
     net = Net.CTPN()
+    # for name, value in net.named_parameters():
+    #     print('name: {0}, grad: {1}'.format(name, value.requires_grad))
+
+    if pretrained:
+        net.load_state_dict(torch.load(pretrained_model))
+    else:
+        net.load_state_dict(torch.load('./model/vgg16.model'))
+        other.init_weight(net)
+
     for name, value in net.named_parameters():
         if name in no_grad:
             value.requires_grad = False
         else:
             value.requires_grad = True
-    # for name, value in net.named_parameters():
-    #     print('name: {0}, grad: {1}'.format(name, value.requires_grad))
-    net.load_state_dict(torch.load('./model/vgg16.model'))
-    other.init_weight(net)
+
     if using_cuda:
         net.cuda()
     net.train()
