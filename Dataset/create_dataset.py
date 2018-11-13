@@ -18,6 +18,8 @@ def scale_img(img, gt, shortest_side=600):
         img = cv2.resize(img, (600, 600))
     h_scale = float(img.shape[0])/float(height)
     w_scale = float(img.shape[1])/float(width)
+    if gt is None:
+        return img
     scale_gt = []
     for box in gt:
         scale_box = []

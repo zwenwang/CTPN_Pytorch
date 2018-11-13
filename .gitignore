@@ -16,3 +16,5 @@
 config
 ./logs
 *.log
+*.so
+*.c
