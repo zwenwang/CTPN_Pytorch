@@ -18,3 +18,4 @@ config
 *.log
 *.so
 *.c
+test_cython.py
