@@ -1,23 +1,5 @@
 import Dataset
 import os
-import codecs
-
-
-def read_gt_file(path, have_BOM=False):
-    result = []
-    if have_BOM:
-        fp = codecs.open(path, 'r', 'utf-8-sig')
-    else:
-        fp = open(path, 'r')
-    for line in fp.readlines():
-        pt = line.split(',')
-        if have_BOM:
-            box = [int(pt[i]) for i in range(8)]
-        else:
-            box = [int(pt[i]) for i in range(8)]
-        result.append(box)
-    fp.close()
-    return result
 
 
 def create_dataset_icdar2015(img_root, gt_root, output_path):

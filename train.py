@@ -1,3 +1,4 @@
+# coding=utf-8
 import torch.optim as optim
 import torch
 import cv2
@@ -16,9 +17,11 @@ import random
 
 
 if __name__ == '__main__':
+    # 读配置文件
     cf = ConfigParser.ConfigParser()
     cf.read('./config')
 
+    # 创建日志文件
     log_dir = './logs'
 
     if not os.path.exists(log_dir):
@@ -32,6 +35,7 @@ if __name__ == '__main__':
     log_handler.setFormatter(log_format)
     logger.addHandler(log_handler)
 
+    # 读一些配置
     gpu_id = cf.get('global', 'gpu_id')
     epoch = cf.getint('global', 'epoch')
     logger.info('Total epoch: {0}'.format(epoch))
@@ -53,6 +57,7 @@ if __name__ == '__main__':
     print('Train epoch: {0}'.format(epoch))
     print('Use CUDA: {0}'.format(using_cuda))
 
+    # 指定不需要更新参数的层
     os.environ['CUDA_VISIBLE_DEVICES'] = gpu_id
     no_grad = [
         'cnn.VGG_16.convolution1_1.weight',
@@ -61,6 +66,7 @@ if __name__ == '__main__':
         'cnn.VGG_16.convolution1_2.bias'
     ]
 
+    # 初始化网络，根据选项载入预训练的VGG模型或者检查点
     net = Net.CTPN()
     # for name, value in net.named_parameters():
     #     print('name: {0}, grad: {1}'.format(name, value.requires_grad))
@@ -77,6 +83,7 @@ if __name__ == '__main__':
         else:
             value.requires_grad = True
 
+    # 使用CUDA
     if using_cuda:
         net.cuda()
     net.train()
@@ -90,6 +97,7 @@ if __name__ == '__main__':
     img_root1 = './train_data/img'
     gt_root1 = './train_data/gt'
 
+    # 读图，之后版本会去除
     im_list = []
     im_list.append(os.listdir(img_root1))
     im_list.append(os.listdir(img_root))
@@ -112,6 +120,8 @@ if __name__ == '__main__':
             for im in im_list[j]:
                 name, _ = os.path.splitext(im)
                 gt_name = 'gt_' + name + '.txt'
+
+                # 两个图片文件夹
                 if j == 1:
                     gt_path = os.path.join(gt_root, gt_name)
                 else:
@@ -120,6 +130,7 @@ if __name__ == '__main__':
                     print('Ground truth file of image {0} not exists.'.format(im))
                     continue
 
+                # 两种txt文件形式（BOM），读取的坐标是一个二维的list
                 if j == 1:
                     gt_txt = Dataset.port.read_gt_file(gt_path, have_BOM=True)
                     img = cv2.imread(os.path.join(img_root, im))
@@ -130,6 +141,8 @@ if __name__ == '__main__':
                     img = cv2.imread(os.path.join(img_root1, im))
                     if display_img_name:
                         print(os.path.join(img_root1, im))
+
+                #  缩放图片，将图片包装为Tensor
                 img, gt_txt = Dataset.scale_img(img, gt_txt)
                 tensor_img = img[np.newaxis, :, :, :]
                 tensor_img = tensor_img.transpose((0, 3, 1, 2))
@@ -138,20 +151,27 @@ if __name__ == '__main__':
                 else:
                     tensor_img = torch.FloatTensor(tensor_img)
 
+                # 将图片送入网络并产生结果
                 vertical_pred, score, side_refinement = net(tensor_img)
+                # 总是显存爆炸，所以删了图片的tensor
                 del tensor_img
+                # 用来存真实值的
                 positive = []
                 negative = []
                 vertical_reg = []
                 side_refinement_reg = []
                 for box in gt_txt:
+                    # 把原来的文本框分成一个个anchor
                     gt_anchor = Dataset.generate_gt_anchor(img, box)
+                    print(gt_anchor)
+                    # 根据分好的anchor产生每个输出要的anchor
                     positive1, negative1, vertical_reg1, side_refinement_reg1 = Net.tag_anchor(gt_anchor, score, box)
                     positive += positive1
                     negative += negative1
                     vertical_reg += vertical_reg1
                     side_refinement_reg += side_refinement_reg1
 
+                # 清梯度，算loss，反传
                 optimizer.zero_grad()
                 loss, cls_loss, v_reg_loss, o_reg_loss = criterion(score, vertical_pred, side_refinement, positive,
                                                                    negative, vertical_reg, side_refinement_reg)
@@ -163,6 +183,7 @@ if __name__ == '__main__':
                 total_v_reg_loss += v_reg_loss
                 total_o_reg_loss += o_reg_loss
 
+                # 显示
                 if iteration % display_iter == 0:
                     end_time = time.time()
                     total_time = end_time - start_time
@@ -189,6 +210,7 @@ if __name__ == '__main__':
                     total_o_reg_loss = 0
                     start_time = time.time()
 
+                # 验证
                 if iteration % val_iter == 0:
                     net.eval()
                     logger.info('Start evaluate at {0} epoch {1} iteration.'.format(i, iteration))
@@ -196,10 +218,10 @@ if __name__ == '__main__':
                     logger.info('End evaluate.')
                     net.train()
                     start_time = time.time()
-
+                # checkpoint
                 if iteration % save_iter == 0:
                     print('Model saved at ./model/ctpn-{0}-{1}.model'.format(i, iteration))
                     torch.save(net.state_dict(), './model/ctpn-{0}-{1}.model'.format(i, iteration))
-
+        # 每个epoch完事儿存一下
         print('Model saved at ./model/ctpn-{0}-end.model'.format(i))
         torch.save(net.state_dict(), './model/ctpn-{0}-end.model'.format(i))

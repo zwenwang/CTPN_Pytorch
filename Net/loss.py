@@ -34,7 +34,7 @@ class CTPN_Loss(nn.Module):
         cls_loss = 0.0
         if self.using_cuda:
             for p in positive_batch:
-                cls_loss += self.Ls_cls(score[0, p[2] * 2: ((p[2] + 1) * 2), p[1], p[0]].unsqueeze(0),
+                cls_loss += self.Ls_cls(score[0, p[2] * 2: ((p[2] + 1) * 2), p[1], p[0]].unsqueeze(0),  # 1*2
                                         torch.LongTensor([1]).cuda())
             for n in negative_batch:
                 cls_loss += self.Ls_cls(score[0, n[2] * 2: ((n[2] + 1) * 2), n[1], n[0]].unsqueeze(0),

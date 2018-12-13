@@ -1,3 +1,5 @@
+# coding=utf-8
+# 已经不准备用lmdb了
 from torch.utils.data import Dataset
 import lmdb
 import other

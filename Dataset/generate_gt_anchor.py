@@ -1,3 +1,4 @@
+# coding=utf-8
 import math
 import other
 import copy
@@ -6,25 +7,33 @@ from other.lib import find_top_bottom as f
 
 def generate_gt_anchor(img, box, anchor_width=16, cpu_speedup=True):
     """
-    calsulate ground truth fine-scale box
-    :param img: input image
-    :param box: ground truth box (4 point)
-    :param anchor_width:
-    :param cpu_speedup: use cython speed up
+    把文本框分成一个个16px的小框的
+    :param img: input image 输入的图片
+    :param box: ground truth box (4 point) 一个文本框的四个点
+    :param anchor_width: anchor的长度
+    :param cpu_speedup: use cython speed up 用不用cython加速（快了大概一倍）
     :return: tuple (position, h, cy)
     """
+    # 看看文本框是不是用float表示的
     if not isinstance(box[0], float):
         box = [float(box[i]) for i in range(len(box))]
     result = []
+    # 算一下最左边和最右边在x轴方向都是第几个anchor
     left_anchor_num = int(math.floor(min(box[0], box[6]) / anchor_width))
     right_anchor_num = int(math.ceil(max(box[2], box[4]) / anchor_width))
+    # 超出图像边界的就不要了
     if right_anchor_num * 16 + 15 > img.shape[1]:
         right_anchor_num -= 1
+    # 产生每个anchor最左边像素和最右边像素的横坐标
     position_pair = [(i * anchor_width, (i + 1) * anchor_width - 1) for i in range(left_anchor_num, right_anchor_num)]
+    # 针对每个anchor算一下上下的y坐标
     y_top, y_bottom = cal_y_top_and_bottom(img, position_pair, box, cpu_speedup=cpu_speedup)
+    # 返回结果，position是左到右第几个anchor（从0开始）
     for i in range(len(position_pair)):
         position = int(position_pair[i][0] / anchor_width)
+        # h是anchor框的高度
         h = y_bottom[i] - y_top[i] + 1
+        # cy就是论文里的cy（每个anchor中心点y坐标）
         cy = (float(y_bottom[i]) + float(y_top[i])) / 2.0
         result.append((position, cy, h))
     return result
@@ -32,7 +41,11 @@ def generate_gt_anchor(img, box, anchor_width=16, cpu_speedup=True):
 
 def cal_y_top_and_bottom(raw_img, position_pair, box, cpu_speedup=False):
     """
-    :param raw_img:
+    根据每个anchor的细条，算它的高度的，就是上下y坐标
+    用了巨蠢的方法，就是先把图像的一个通道（好象是B）全变成0
+    然后利用B=255的颜色画groundtruth文本框
+    最后每个anchor的细条里找y坐标最大的和最小的像素，这个就是上下y坐标
+    :param raw_img: 原始图像
     :param position_pair: for example:[(0, 15), (16, 31), ...]
     :param box: gt box (4 point)
     :param cpu_speedup: use cython speed up

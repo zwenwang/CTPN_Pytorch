@@ -1,11 +1,33 @@
+# coding=utf-8
 import os
 import lmdb
 import cv2
 import other
-import Net
+import codecs
+import json
+import generate_gt_anchor
+
+
+def to_json(img, img_name, gt_box, anchor_width=16):
+    json_obj = {'file': img_name}
+    data = []
+    for box in gt_box:
+        temp = [box]
+        gt_anchor = generate_gt_anchor.generate_gt_anchor(img, box, anchor_width=anchor_width)
+        temp.append(gt_anchor)
+        data.append(temp)
+    json_obj.update(data=data)
+    str_json = json.dumps(json_obj)
+    return str_json
 
 
 def scale_img(img, gt, shortest_side=600):
+    """
+    :param img: 图片，opencv读取
+    :param gt: groundtruth坐标
+    :param shortest_side: 最短边长
+    :return: 返回缩放后的图片和坐标
+    """
     height = img.shape[0]
     width = img.shape[1]
     scale = float(shortest_side)/float(min(height, width))
@@ -32,6 +54,23 @@ def scale_img(img, gt, shortest_side=600):
     return img, scale_gt
 
 
+def read_gt_file(path, have_BOM=False):
+    result = []
+    if have_BOM:
+        fp = codecs.open(path, 'r', 'utf-8-sig')
+    else:
+        fp = open(path, 'r')
+    for line in fp.readlines():
+        pt = line.split(',')
+        if have_BOM:
+            box = [int(pt[i]) for i in range(8)]
+        else:
+            box = [int(pt[i]) for i in range(8)]
+        result.append(box)
+    fp.close()
+    return result
+
+
 def check_img(img):
     if img is None:
         return False
@@ -41,61 +80,98 @@ def check_img(img):
     return True
 
 
-def write_cache(env, data):
-    with env.begin(write=True) as e:
-        for i, l in data.iteritems():
-            e.put(i, l)
+# def write_cache(env, data):
+#     with env.begin(write=True) as e:
+#         for i, l in data.iteritems():
+#             e.put(i, l)
 
 
-def box_list2str(l):
-    result = []
-    for box in l:
-        if not len(box) % 8 == 0:
-            return '', False
-        result.append(','.join(box))
-    return '|'.join(result), True
+# def create_dataset(output_path, img_list, gt_list):
+#     assert len(img_list) == len(gt_list)
+#     num = len(img_list)
+#     if not os.path.exists(output_path):
+#         os.makedirs(output_path)
+#     env = lmdb.open(output_path, map_size=1099511627776)
+#     cache = {}
+#     counter = 1
+#     for i in range(num):
+#         img_path = img_list[i]
+#         gt_path = gt_list[i]
+#         if not os.path.exists(img_path):
+#             print("{0} is not exist.".format(img_path))
+#             continue
+#
+#         img = cv2.imread(img_path)
+#         if not check_img(img):
+#             print('Image {0} is not valid.'.format(img_path))
+#             continue
+#
+#         img_key = 'image-%09d' % counter
+#         gt_key = 'gt-%09d' % counter
+#         cache[img_key] = other.np_img2base64(img, img_path)
+#         cache[gt_key] = gt
+#         counter += 1
+#         if counter % 100 == 0:
+#             write_cache(env, cache)
+#             cache.clear()
+#             print('Written {0}/{1}'.format(counter, num))
+#     cache['num'] = str(counter - 1)
+#     write_cache(env, cache)
+#     print('Create dataset with {0} image.'.format(counter - 1))
 
 
-def create_dataset(output_path, img_list, gt_list):
-    assert len(img_list) == len(gt_list)
-    net = Net.VGG_16()
-    num = len(img_list)
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-    env = lmdb.open(output_path, map_size=1099511627776)
-    cache = {}
-    counter = 1
-    for i in range(num):
-        img_path = img_list[i]
-        gt = gt_list[i]
-        if not os.path.exists(img_path):
-            print("{0} is not exist.".format(img_path))
-            continue
+class LMDB():
+    def __init__(self, path):
+        self.path = path
+        self.loaded = False
+        self.env = None
 
-        if len(gt) == 0:
-            print("Ground truth of {0} is not exist.".format(img_path))
-            continue
+    def load(self):
+        self.env = lmdb.Environment(self.path)
+        self.loaded = True
 
-        img = cv2.imread(img_path)
+    def create(self, map_size=1099511627776):
+        self.env = lmdb.open(self.path, map_size=map_size)
+        txn = self.env.begin(write=True)
+        txn.put(key='num', value=str(0))
+        txn.commit()
+        self.loaded = True
+
+    def insert(self, img, gt, img_name, anchor_width=16):
+        if not self.loaded:
+            print('Please load or create lmdb first.')
         if not check_img(img):
-            print('Image {0} is not valid.'.format(img_path))
-            continue
-
+            print('Image is not valid.')
+            return False
+        if len(gt) == 0:
+            print('GroundTruth is not valid.')
+            return False
         img, gt = scale_img(img, gt)
-        gt_str = box_list2str(gt)
-        if not gt_str[1]:
-            print("Ground truth of {0} is not valid.".format(img_path))
-            continue
+        json_str = to_json(img, img_name,  gt, anchor_width=anchor_width)
+        txn = self.env.begin(write=True)
+        num = int(txn.get('num'))
 
-        img_key = 'image-%09d' % counter
-        gt_key = 'gt-%09d' % counter
-        cache[img_key] = other.np_img2base64(img, img_path)
-        cache[gt_key] = gt_str[0]
-        counter += 1
-        if counter % 100 == 0:
-            write_cache(env, cache)
-            cache.clear()
-            print('Written {0}/{1}'.format(counter, num))
-    cache['num'] = str(counter - 1)
-    write_cache(env, cache)
-    print('Create dataset with {0} image.'.format(counter - 1))
+        img_index = 'image-%09d' % num
+        txn.put(key=img_index, value=other.np_img2base64(img, img_name))
+        gt_index = 'gt-%09d' % num
+        txn.put(key=gt_index, value=json_str)
+        txn.put(key='num', value=str(num + 1))
+        txn.commit()
+        return True
+
+    def query(self, index):
+        if not self.loaded:
+            print('Please load or create lmdb first.')
+        txn = self.env.begin()
+        img_index = 'image-%09d' % index
+        gt_index = 'gt-%09d' % index
+        img = txn.get(img_index)
+        gt = txn.get(gt_index)
+        return other.base642np_image(img), json.loads(gt)
+
+    def sum(self):
+        if not self.loaded:
+            print('Please load or create lmdb first.')
+        txn = self.env.begin()
+        num = int(txn.get('num'))
+        return num

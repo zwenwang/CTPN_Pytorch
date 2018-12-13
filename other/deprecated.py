@@ -26,3 +26,12 @@ def cal_y_crossover_pt(box, x):
         result['y'].append(y4)
         result['edge'].append(4)
     return result
+
+
+def box_list2str(l):
+    result = []
+    for box in l:
+        if not len(box) % 8 == 0:
+            return '', False
+        result.append(','.join(box))
+    return '|'.join(result), True

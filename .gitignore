@@ -1,5 +1,4 @@
 .idea
-
 *.iml
 *.pyc
 ./model
@@ -19,3 +18,5 @@ config
 *.so
 *.c
 test_cython.py
+test_lmdb.py
+/train
