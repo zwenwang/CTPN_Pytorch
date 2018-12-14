@@ -4,12 +4,12 @@ import torch
 
 
 class CTPN_Loss(nn.Module):
-    def __init__(self, using_cuda=False):
+    def __init__(self, Ns, ratio, lambda1=1.0, lambda2=1.0, using_cuda=False):
         super(CTPN_Loss, self).__init__()
-        self.Ns = 128
-        self.ratio = 0.5
-        self.lambda1 = 1.0
-        self.lambda2 = 1.0
+        self.Ns = Ns
+        self.ratio = ratio
+        self.lambda1 = lambda1
+        self.lambda2 = lambda2
         self.Ls_cls = nn.CrossEntropyLoss()
         self.Lv_reg = nn.SmoothL1Loss()
         self.Lo_reg = nn.SmoothL1Loss()
