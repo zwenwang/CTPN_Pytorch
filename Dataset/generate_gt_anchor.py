@@ -2,7 +2,7 @@
 import math
 import other
 import copy
-from other.lib import find_top_bottom as f
+# from other.lib import find_top_bottom as f
 
 
 def generate_gt_anchor(img, box, anchor_width=16, cpu_speedup=True):
@@ -57,7 +57,31 @@ def cal_y_top_and_bottom(raw_img, position_pair, box, cpu_speedup=False):
             img[i, j, 0] = 0
     img = other.draw_box_4pt(img, box, color=(255, 0, 0))
     if cpu_speedup:
-        y_top, y_bottom = f.find_top_bottom(img, position_pair)
+        # y_top, y_bottom = f.find_top_bottom(img, position_pair)
+        y_top = []
+        y_bottom = []
+        height = img.shape[0]
+        top_flag = False
+        bottom_flag = False
+        for k in range(len(position_pair)):
+            for y in range(0, height):
+                for x in range(position_pair[k][0], position_pair[k][1] + 1):
+                    if img[y, x, 0] == 255:
+                        y_top.append(y)
+                        top_flag = True
+                        break
+                if top_flag is True:
+                    break
+            for y in range(height - 1, -1, -1):
+                for x in range(position_pair[k][0], position_pair[k][1] + 1):
+                    if img[y, x, 0] == 255:
+                        y_bottom.append(y)
+                        bottom_flag = True
+                        break
+                if bottom_flag is True:
+                    break
+            top_flag = False
+            bottom_flag = False
     else:
         y_top = []
         y_bottom = []
