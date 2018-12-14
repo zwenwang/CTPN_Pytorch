@@ -35,17 +35,17 @@ class CTPN_Loss(nn.Module):
         if self.using_cuda:
             for p in positive_batch:
                 cls_loss += self.Ls_cls(score[0, p[2] * 2: ((p[2] + 1) * 2), p[1], p[0]].unsqueeze(0),  # 1*2
-                                        torch.LongTensor([1]).cuda())
+                                        torch.LongTensor([[1]]).cuda())
             for n in negative_batch:
                 cls_loss += self.Ls_cls(score[0, n[2] * 2: ((n[2] + 1) * 2), n[1], n[0]].unsqueeze(0),
-                                        torch.LongTensor([0]).cuda())
+                                        torch.LongTensor([[0]]).cuda())
         else:
             for p in positive_batch:
                 cls_loss += self.Ls_cls(score[0, p[2] * 2: ((p[2] + 1) * 2), p[1], p[0]].unsqueeze(0),
-                                        torch.LongTensor([1]))
+                                        torch.LongTensor([[1]]))
             for n in negative_batch:
                 cls_loss += self.Ls_cls(score[0, n[2] * 2: ((n[2] + 1) * 2), n[1], n[0]].unsqueeze(0),
-                                        torch.LongTensor([0]))
+                                        torch.LongTensor([[0]]))
         cls_loss = cls_loss / self.Ns
 
         # calculate vertical coordinate regression loss
@@ -53,11 +53,11 @@ class CTPN_Loss(nn.Module):
         Nv = len(vertical_reg)
         if self.using_cuda:
             for v in vertical_reg:
-                v_reg_loss += self.Lv_reg(vertical_pred[0, v[2] * 2: ((v[2] + 1) * 2), v[1], v[0]].unsqueeze(0),
+                v_reg_loss += self.Lv_reg(vertical_pred[0, v[2] * 2: ((v[2] + 1) * 2), v[1], v[0]].view(1, -1),
                                           torch.FloatTensor([v[3], v[4]]).unsqueeze(0).cuda())
         else:
             for v in vertical_reg:
-                v_reg_loss += self.Lv_reg(vertical_pred[0, v[2] * 2: ((v[2] + 1) * 2), v[1], v[0]].unsqueeze(0),
+                v_reg_loss += self.Lv_reg(vertical_pred[0, v[2] * 2: ((v[2] + 1) * 2), v[1], v[0]].view(1, -1),
                                           torch.FloatTensor([v[3], v[4]]).unsqueeze(0))
         v_reg_loss = v_reg_loss / float(Nv)
 
@@ -66,11 +66,11 @@ class CTPN_Loss(nn.Module):
         No = len(side_refinement_reg)
         if self.using_cuda:
             for s in side_refinement_reg:
-                o_reg_loss += self.Lo_reg(side_refinement[0, s[2]: s[2] + 1, s[1], s[0]].unsqueeze(0),
+                o_reg_loss += self.Lo_reg(side_refinement[0, s[2]: s[2] + 1, s[1], s[0]].view(1, -1),
                                           torch.FloatTensor([s[3]]).unsqueeze(0).cuda())
         else:
             for s in side_refinement_reg:
-                o_reg_loss += self.Lo_reg(side_refinement[0, s[2]: s[2] + 1, s[1], s[0]].unsqueeze(0),
+                o_reg_loss += self.Lo_reg(side_refinement[0, s[2]: s[2] + 1, s[1], s[0]].view(1, -1),
                                           torch.FloatTensor([s[3]]).unsqueeze(0))
         o_reg_loss = o_reg_loss / float(No)
 

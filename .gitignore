@@ -20,3 +20,4 @@ config
 test_cython.py
 test_lmdb.py
 /train
+/ICDAR

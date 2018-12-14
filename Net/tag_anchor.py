@@ -85,7 +85,7 @@ def tag_anchor(gt_anchor, cnn_output, gt_box):
             right_side = False
 
         # 这一条16px每个高度搞一个iou
-        iou = np.zeros(height, len(anchor_height))
+        iou = np.zeros((height, len(anchor_height)))
         temp_positive = []
         for i in range(iou.shape[0]):
             for j in range(iou.shape[1]):

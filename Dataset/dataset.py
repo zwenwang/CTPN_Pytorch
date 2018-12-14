@@ -1,8 +1,8 @@
 # coding=utf-8
-# 已经不准备用lmdb了
 from torch.utils.data import Dataset
 import lmdb
 import other
+import json
 
 
 class LmdbDataset(Dataset):
@@ -19,11 +19,12 @@ class LmdbDataset(Dataset):
 
     def __getitem__(self, index):
         assert index <= len(self), 'Index out of range.'
-        index += 1
+        # index += 1
         with self.env.begin(write=False) as e:
             img_key = 'image-%09d' % index
             img_base64 = e.get(img_key)
             img = other.base642np_image(img_base64)
             gt_key = 'gt-%09d' % index
-            gt = str(e.get(gt_key))
+            gt = e.get(gt_key)
+            gt = json.loads(gt)
         return img, gt

@@ -138,6 +138,14 @@ class LMDB():
         self.loaded = True
 
     def insert(self, img, gt, img_name, anchor_width=16):
+        """
+        向数据库里插入图片
+        :param img: 图像，opencv读取的
+        :param gt: groundtruth， 格式n×8
+        :param img_name: 图像名称，带后缀名的
+        :param anchor_width: anchor宽度
+        :return:
+        """
         if not self.loaded:
             print('Please load or create lmdb first.')
         if not check_img(img):
@@ -162,7 +170,7 @@ class LMDB():
     def query(self, index):
         if not self.loaded:
             print('Please load or create lmdb first.')
-        txn = self.env.begin()
+        txn = self.env.begin(write=False)
         img_index = 'image-%09d' % index
         gt_index = 'gt-%09d' % index
         img = txn.get(img_index)
@@ -172,6 +180,6 @@ class LMDB():
     def sum(self):
         if not self.loaded:
             print('Please load or create lmdb first.')
-        txn = self.env.begin()
+        txn = self.env.begin(write=False)
         num = int(txn.get('num'))
         return num
