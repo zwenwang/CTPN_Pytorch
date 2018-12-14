@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     criterion = Net.CTPN_Loss(using_cuda=using_cuda)
     # 用torch里的东西来读数据
-    train_dataset = Dataset.LmdbDataset('./train')
+    train_dataset = Dataset.LmdbDataset(cf.get('global', 'train_dataset'))
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=1, shuffle=True)
 
     if optimizer_type == 'SGD':

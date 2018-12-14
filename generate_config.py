@@ -13,6 +13,8 @@ if __name__ == '__main__':
     cp.set('global', 'save_iter', '100')
     cp.set('global', 'pretrained', 'False')
     cp.set('global', 'pretrained_model', '')
+    cp.set('global', 'train_dataset', './train')
+    cp.set('global', 'test_dataset', './test')
     cp.add_section('parameter')
     cp.set('parameter', 'optimizer', 'SGD')
     cp.set('parameter', 'lr', '0.001')
