@@ -37,7 +37,6 @@ if __name__ == '__main__':
     logger.info('Total epoch: {0}'.format(epoch))
 
     using_cuda = cf.getboolean('global', 'using_cuda')
-    display_img_name = cf.getboolean('global', 'display_file_name')
     display_iter = cf.getint('global', 'display_iter')
     val_iter = cf.getint('global', 'val_iter')
     save_iter = cf.getint('global', 'save_iter')
@@ -47,6 +46,13 @@ if __name__ == '__main__':
 
     pretrained = cf.getboolean('global', 'pretrained')
     pretrained_model = cf.get('global', 'pretrained_model')
+
+    batch_size = cf.getint('global', 'batch_size')
+    sample_ratio = cf.getfloat('global', 'sample_ratio')
+    test_batch_num = cf.getint('global', 'test_batch_num')
+
+    have_prefix = cf.getboolean('global', 'have_prefix')
+    prefix = cf.get('global', 'prefix')
 
     # 指定不需要更新参数的层
     os.environ['CUDA_VISIBLE_DEVICES'] = gpu_id
@@ -74,9 +80,12 @@ if __name__ == '__main__':
         else:
             value.requires_grad = True
 
+    criterion = Net.CTPN_Loss(batch_size, sample_ratio, using_cuda=using_cuda)
+
     # 使用CUDA
     if using_cuda:
         net.cuda()
+        criterion = criterion.cuda()
     net.train()
     print(net)
     print('Using gpu id(available if use cuda): {0}'.format(gpu_id))
@@ -86,10 +95,11 @@ if __name__ == '__main__':
     print('Use CUDA: {0}'.format(using_cuda))
     logger.info('Use CUDA: {0}'.format(using_cuda))
 
-    criterion = Net.CTPN_Loss(using_cuda=using_cuda)
     # 用torch里的东西来读数据
     train_dataset = Dataset.LmdbDataset(cf.get('global', 'train_dataset'))
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=1, shuffle=True)
+
+    test_dataset = Dataset.LmdbDataset(cf.get('global', 'test_dataset'))
 
     if optimizer_type == 'SGD':
         momentum = cf.getfloat('parameter', 'momentum')
@@ -183,19 +193,27 @@ if __name__ == '__main__':
                 total_o_reg_loss = 0
                 start_time = time.time()
 
-            # # 验证
-            # if iteration % val_iter == 0:
-            #     net.eval()
-            #     logger.info('Start evaluate at {0} epoch {1} iteration.'.format(i, iteration))
-            #     val_func.val(net, criterion, 10, using_cuda, logger)
-            #     logger.info('End evaluate.')
-            #     net.train()
-            #     start_time = time.time()
-            # checkpoint
+            # 验证
+            if iteration % val_iter == 0:
+                net.eval()
+                logger.info('Start evaluate at {0} epoch {1} iteration.'.format(i, iteration))
+                val_func.val(net, criterion, test_batch_num, using_cuda, logger, test_dataset)
+                logger.info('End evaluate.')
+                net.train()
+                start_time = time.time()
+
             if iteration % save_iter == 0:
-                print('Model saved at ./model/ctpn-{0}-{1}.model'.format(i, iteration))
-                torch.save(net.state_dict(), './model/ctpn-{0}-{1}.model'.format(i, iteration))
+                if have_prefix:
+                    print('Model saved at ./model/{2}-ctpn-{0}-{1}.model'.format(i, iteration, prefix))
+                    torch.save(net.state_dict(), './{2}-model/ctpn-{0}-{1}.model'.format(i, iteration, prefix))
+                else:
+                    print('Model saved at ./model/ctpn-{0}-{1}.model'.format(i, iteration))
+                    torch.save(net.state_dict(), './model/ctpn-{0}-{1}.model'.format(i, iteration))
 
         # 每个epoch完事儿存一下
-        print('Model saved at ./model/ctpn-{0}-end.model'.format(i))
-        torch.save(net.state_dict(), './model/ctpn-{0}-end.model'.format(i))
+        if have_prefix:
+            print('Model saved at ./model/{1}-ctpn-{0}-end.model'.format(i, prefix))
+            torch.save(net.state_dict(), './model/{1}-ctpn-{0}-end.model'.format(i, prefix))
+        else:
+            print('Model saved at ./model/ctpn-{0}-end.model'.format(i))
+            torch.save(net.state_dict(), './model/ctpn-{0}-end.model'.format(i))

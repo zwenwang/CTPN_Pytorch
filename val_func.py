@@ -1,75 +1,69 @@
+# coding=utf-8
 import torch
-import cv2
-import Dataset.port
 import Net
-import numpy as np
-import os
 import time
-import random
 
 
-def val(net, criterion, batch_num, using_cuda, logger):
-    img_root = './val_data/test_image'
-    gt_root = './val_data/test_gt'
-    img_list = os.listdir(img_root)
+def val(net, criterion, batch_num, using_cuda, logger, test_dataset):
+    # img_root = './val_data/test_image'
+    # gt_root = './val_data/test_gt'
+    # img_list = os.listdir(img_root)
     total_loss = 0
     total_cls_loss = 0
     total_v_reg_loss = 0
     total_o_reg_loss = 0
     start_time = time.time()
-    for im in random.sample(img_list, batch_num):
-        name, _ = os.path.splitext(im)
-        gt_name = 'gt_' + name + '.txt'
-        gt_path = os.path.join(gt_root, gt_name)
-        if not os.path.exists(gt_path):
-            print('Ground truth file of image {0} not exists.'.format(im))
-            continue
-
-        gt_txt = Dataset.port.read_gt_file(gt_path, have_BOM=True)
-        img = cv2.imread(os.path.join(img_root, im))
-        img, gt_txt = Dataset.scale_img(img, gt_txt)
-        tensor_img = img[np.newaxis, :, :, :]
-        tensor_img = tensor_img.transpose((0, 3, 1, 2))
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=True)
+    test_iter = iter(test_loader)
+    test_num = max(len(test_loader), batch_num)
+    for i in range(test_num):
+        data = test_iter.next()
+        img, gt = data
+        tensor_img = img.transpose(1, 3)
+        tensor_img = tensor_img.transpose(2, 3)
+        tensor_img = tensor_img.float()
         if using_cuda:
-            tensor_img = torch.FloatTensor(tensor_img).cuda()
-        else:
-            tensor_img = torch.FloatTensor(tensor_img)
+            tensor_img = tensor_img.cuda()
 
+        # 将图片送入网络并产生结果
         vertical_pred, score, side_refinement = net(tensor_img)
+        # 总是显存爆炸，所以删了图片的tensor
         del tensor_img
+        # 用来存真实值的
         positive = []
         negative = []
         vertical_reg = []
         side_refinement_reg = []
-        for box in gt_txt:
-            gt_anchor = Dataset.generate_gt_anchor(img, box)
-            positive1, negative1, vertical_reg1, side_refinement_reg1 = Net.tag_anchor(gt_anchor, score, box)
+        for box in gt['data']:
+            # 根据分好的anchor产生每个输出要的anchor
+            positive1, negative1, vertical_reg1, side_refinement_reg1 = Net.tag_anchor(box[1], score, box[0])
             positive += positive1
             negative += negative1
             vertical_reg += vertical_reg1
             side_refinement_reg += side_refinement_reg1
 
+        # 算loss
         loss, cls_loss, v_reg_loss, o_reg_loss = criterion(score, vertical_pred, side_refinement, positive,
                                                            negative, vertical_reg, side_refinement_reg)
         total_loss += loss
         total_cls_loss += cls_loss
         total_v_reg_loss += v_reg_loss
         total_o_reg_loss += o_reg_loss
+
     end_time = time.time()
     total_time = end_time - start_time
     print('####################  Start evaluate  ####################')
-    print('loss: {0}'.format(total_loss / float(batch_num)))
-    logger.info('Evaluate loss: {0}'.format(total_loss / float(batch_num)))
+    print('loss: {0}'.format(total_loss / float(test_num)))
+    logger.info('Evaluate loss: {0}'.format(total_loss / float(test_num)))
 
-    print('classification loss: {0}'.format(total_cls_loss / float(batch_num)))
-    logger.info('Evaluate vertical regression loss: {0}'.format(total_v_reg_loss / float(batch_num)))
+    print('classification loss: {0}'.format(total_cls_loss / float(test_num)))
+    logger.info('Evaluate vertical regression loss: {0}'.format(total_v_reg_loss / float(test_num)))
 
-    print('vertical regression loss: {0}'.format(total_v_reg_loss / float(batch_num)))
-    logger.info('Evaluate side-refinement regression loss: {0}'.format(total_o_reg_loss / float(batch_num)))
+    print('vertical regression loss: {0}'.format(total_v_reg_loss / float(test_num)))
+    logger.info('Evaluate side-refinement regression loss: {0}'.format(total_o_reg_loss / float(test_num)))
 
-    print('side-refinement regression loss: {0}'.format(total_o_reg_loss / float(batch_num)))
-    logger.info('Evaluate side-refinement regression loss: {0}'.format(total_o_reg_loss / float(batch_num)))
+    print('side-refinement regression loss: {0}'.format(total_o_reg_loss / float(test_num)))
+    logger.info('Evaluate side-refinement regression loss: {0}'.format(total_o_reg_loss / float(test_num)))
 
-    print('{1} iterations for {0} seconds.'.format(total_time, batch_num))
+    print('{1} iterations for {0} seconds.'.format(total_time, test_num))
     print('#####################  Evaluate end  #####################')
-    print('\n')
