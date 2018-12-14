@@ -1,10 +1,8 @@
 # coding=utf-8
 import torch.optim as optim
 import torch
-import cv2
-import Dataset.port
+import Dataset
 import Net
-import numpy as np
 import os
 import other
 import ConfigParser
@@ -12,8 +10,6 @@ import time
 import val_func
 import logging
 import datetime
-import copy
-import random
 
 
 if __name__ == '__main__':
