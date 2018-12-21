@@ -6,6 +6,7 @@ import torch
 
 
 def draw_box_4pt(img, pt, color=(0, 255, 0), thickness=1):
+    assert len(pt) == 8
     if not isinstance(pt[0], int):
         pt = [int(pt[i]) for i in range(8)]
     img = cv2.line(img, (pt[0], pt[1]), (pt[2], pt[3]), color, thickness)
@@ -16,6 +17,7 @@ def draw_box_4pt(img, pt, color=(0, 255, 0), thickness=1):
 
 
 def draw_box_2pt(img, pt, color=(0, 255, 0), thickness=1):
+    assert len(pt) == 4
     if not isinstance(pt[0], int):
         pt = [int(pt[i]) for i in range(4)]
     img = cv2.rectangle(img, (pt[0], pt[1]), (pt[2], pt[3]), color, thickness=thickness)

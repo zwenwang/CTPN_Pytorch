@@ -29,7 +29,7 @@ def cal_IoU(cy1, h1, cy2, h2):
     return float(intersection)/float(union)
 
 
-# 没啥用的函数
+# 根据中心点和高度算上下y坐标的
 def cal_y(cy, h):
     y_top = int(cy - (float(h) - 1) / 2.0)
     y_bottom = int(cy + (float(h) - 1) / 2.0)

@@ -5,13 +5,10 @@ import time
 
 
 def val(net, criterion, batch_num, using_cuda, logger, test_dataset):
-    # img_root = './val_data/test_image'
-    # gt_root = './val_data/test_gt'
-    # img_list = os.listdir(img_root)
-    total_loss = 0
-    total_cls_loss = 0
-    total_v_reg_loss = 0
-    total_o_reg_loss = 0
+    total_loss = 0.0
+    total_cls_loss = 0.0
+    total_v_reg_loss = 0.0
+    total_o_reg_loss = 0.0
     start_time = time.time()
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=True)
     test_iter = iter(test_loader)
@@ -19,16 +16,17 @@ def val(net, criterion, batch_num, using_cuda, logger, test_dataset):
     for i in range(test_num):
         data = test_iter.next()
         img, gt = data
-        tensor_img = img.transpose(1, 3)
-        tensor_img = tensor_img.transpose(2, 3)
-        tensor_img = tensor_img.float()
+        img = img.transpose(1, 3)
+        img = img.transpose(2, 3)
+        img = img.float()
+        print(img.shape)
         if using_cuda:
-            tensor_img = tensor_img.cuda()
+            img = img.cuda()
 
         # 将图片送入网络并产生结果
-        vertical_pred, score, side_refinement = net(tensor_img)
+        vertical_pred, score, side_refinement = net(img)
         # 总是显存爆炸，所以删了图片的tensor
-        del tensor_img
+        del img
         # 用来存真实值的
         positive = []
         negative = []
@@ -45,10 +43,10 @@ def val(net, criterion, batch_num, using_cuda, logger, test_dataset):
         # 算loss
         loss, cls_loss, v_reg_loss, o_reg_loss = criterion(score, vertical_pred, side_refinement, positive,
                                                            negative, vertical_reg, side_refinement_reg)
-        total_loss += loss
-        total_cls_loss += cls_loss
-        total_v_reg_loss += v_reg_loss
-        total_o_reg_loss += o_reg_loss
+        total_loss += float(loss)
+        total_cls_loss += float(cls_loss)
+        total_v_reg_loss += float(v_reg_loss)
+        total_o_reg_loss += float(o_reg_loss)
 
     end_time = time.time()
     total_time = end_time - start_time

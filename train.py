@@ -97,9 +97,11 @@ if __name__ == '__main__':
 
     # 用torch里的东西来读数据
     train_dataset = Dataset.LmdbDataset(cf.get('global', 'train_dataset'))
+    assert train_dataset
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=1, shuffle=True)
 
     test_dataset = Dataset.LmdbDataset(cf.get('global', 'test_dataset'))
+    assert test_dataset
 
     if optimizer_type == 'SGD':
         momentum = cf.getfloat('parameter', 'momentum')
@@ -121,26 +123,26 @@ if __name__ == '__main__':
 
     for i in range(epoch):
         iteration = 1
-        total_loss = 0
-        total_cls_loss = 0
-        total_v_reg_loss = 0
-        total_o_reg_loss = 0
+        total_loss = 0.0
+        total_cls_loss = 0.0
+        total_v_reg_loss = 0.0
+        total_o_reg_loss = 0.0
         start_time = time.time()
         train_iter = iter(train_loader)
         total_iter = len(train_loader)
         for j in range(total_iter):
             data = train_iter.next()
             img, gt = data
-            tensor_img = img.transpose(1, 3)
-            tensor_img = tensor_img.transpose(2, 3)
-            tensor_img = tensor_img.float()
+            img = img.transpose(1, 3)
+            img = img.transpose(2, 3)
+            img = img.float()
             if using_cuda:
-                tensor_img = tensor_img.cuda()
+                img = img.cuda()
 
             # 将图片送入网络并产生结果
-            vertical_pred, score, side_refinement = net(tensor_img)
+            vertical_pred, score, side_refinement = net(img)
             # 总是显存爆炸，所以删了图片的tensor
-            del tensor_img
+            del img
             # 用来存真实值的
             positive = []
             negative = []
@@ -161,10 +163,10 @@ if __name__ == '__main__':
             loss.backward()
             optimizer.step()
             iteration += 1
-            total_loss += loss
-            total_cls_loss += cls_loss
-            total_v_reg_loss += v_reg_loss
-            total_o_reg_loss += o_reg_loss
+            total_loss += float(loss)
+            total_cls_loss += float(cls_loss)
+            total_v_reg_loss += float(v_reg_loss)
+            total_o_reg_loss += float(o_reg_loss)
 
             # 显示
             if iteration % display_iter == 0:
