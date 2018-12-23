@@ -5,6 +5,7 @@ import time
 
 
 def val(net, criterion, batch_num, using_cuda, logger, test_dataset):
+    print('####################  Start evaluate  ####################')
     total_loss = 0.0
     total_cls_loss = 0.0
     total_v_reg_loss = 0.0
@@ -49,7 +50,6 @@ def val(net, criterion, batch_num, using_cuda, logger, test_dataset):
 
     end_time = time.time()
     total_time = end_time - start_time
-    print('####################  Start evaluate  ####################')
     print('loss: {0}'.format(total_loss / float(test_num)))
     logger.info('Evaluate loss: {0}'.format(total_loss / float(test_num)))
 
