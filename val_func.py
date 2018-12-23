@@ -13,7 +13,7 @@ def val(net, criterion, batch_num, using_cuda, logger, test_dataset):
     start_time = time.time()
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=True)
     test_iter = iter(test_loader)
-    test_num = max(len(test_loader), batch_num)
+    test_num = min(len(test_loader), batch_num)
     for i in range(test_num):
         data = test_iter.next()
         img, gt = data
