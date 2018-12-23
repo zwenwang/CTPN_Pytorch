@@ -22,3 +22,4 @@ test_lmdb.py
 /train
 /ICDAR
 /test
+test_utils.py

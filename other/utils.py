@@ -3,6 +3,7 @@ import numpy as np
 import base64
 import os
 import torch
+import math
 
 
 def draw_box_4pt(img, pt, color=(0, 255, 0), thickness=1):
@@ -94,3 +95,14 @@ def init_weight(net):
 
     torch.nn.init.normal_(net.side_refinement.weight, mean=0, std=0.01)
     torch.nn.init.constant_(net.side_refinement.bias, val=0)
+
+
+def perspective_trans(src, img, mode=max):
+    distance = lambda x_1, y_1, x_2, y_2: math.sqrt(math.pow(x_1 - x_2, 2) + math.pow(y_1 - y_2, 2))
+    width = int(mode(distance(src[0], src[1], src[2], src[3]), distance(src[6], src[7], src[4], src[5])))
+    height = int(mode(distance(src[0], src[1], src[6], src[7]), distance(src[2], src[3], src[4], src[5])))
+
+    m = cv2.getPerspectiveTransform(np.float32([src[0:2], src[2:4], src[4:6], src[6:]]),
+                                    np.float32([[0, 0], [width, 0], [width, height], [0, height]]))
+    result = cv2.warpPerspective(img, m, (width, height))
+    return result
