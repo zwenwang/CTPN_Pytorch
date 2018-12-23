@@ -19,7 +19,6 @@ def val(net, criterion, batch_num, using_cuda, logger, test_dataset):
         img = img.transpose(1, 3)
         img = img.transpose(2, 3)
         img = img.float()
-        print(img.shape)
         if using_cuda:
             img = img.cuda()
 

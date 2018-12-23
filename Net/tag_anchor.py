@@ -14,19 +14,29 @@ def cal_IoU(cy1, h1, cy2, h2):
     """
     y_top1, y_bottom1 = cal_y(cy1, h1)
     y_top2, y_bottom2 = cal_y(cy2, h2)
-    offset = min(y_top1, y_top2)
-    y_top1 = y_top1 - offset
-    y_top2 = y_top2 - offset
-    y_bottom1 = y_bottom1 - offset
-    y_bottom2 = y_bottom2 - offset
-    line = np.zeros(max(y_bottom1, y_bottom2) + 1)
-    for i in range(y_top1, y_bottom1 + 1):
-        line[i] += 1
-    for j in range(y_top2, y_bottom2 + 1):
-        line[j] += 1
-    union = np.count_nonzero(line, 0)
-    intersection = line[line == 2].size
-    return float(intersection)/float(union)
+    cross_h = min(y_bottom1, y_bottom2) - max(y_top1, y_top2) + 1
+    if cross_h <= 0:
+        return 0.0
+    else:
+        return float(cross_h) / float(h1 + h2 - cross_h)
+
+
+# def cal_IoU_old(cy1, h1, cy2, h2):
+#     y_top1, y_bottom1 = cal_y(cy1, h1)
+#     y_top2, y_bottom2 = cal_y(cy2, h2)
+#     offset = min(y_top1, y_top2)
+#     y_top1 = y_top1 - offset
+#     y_top2 = y_top2 - offset
+#     y_bottom1 = y_bottom1 - offset
+#     y_bottom2 = y_bottom2 - offset
+#     line = np.zeros(max(y_bottom1, y_bottom2) + 1)
+#     for i in range(y_top1, y_bottom1 + 1):
+#         line[i] += 1
+#     for j in range(y_top2, y_bottom2 + 1):
+#         line[j] += 1
+#     union = np.count_nonzero(line, 0)
+#     intersection = line[line == 2].size
+#     return float(intersection)/float(union)
 
 
 # 根据中心点和高度算上下y坐标的
@@ -93,6 +103,7 @@ def tag_anchor(gt_anchor, cnn_output, gt_box):
                 if not valid_anchor((float(i) * 16.0 + 7.5), anchor_height[j], height):
                     continue
                 # 算IoU
+                # TODO: 有一些小问题，但是对最终结果基本没有影响
                 iou[i][j] = cal_IoU((float(i) * 16.0 + 7.5), anchor_height[j], a[1], a[2])
 
                 # 大于0.7的正样本

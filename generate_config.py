@@ -16,6 +16,8 @@ if __name__ == '__main__':
     cp.set('global', 'test_dataset', './test')
     cp.set('global', 'batch_size', '128')
     cp.set('global', 'sample_ratio', '0.5')
+    cp.set('global', 'v_batch_size', '128')
+    cp.set('global', 'o_batch_size', '64')
     cp.set('global', 'test_batch_num', '10')
     cp.set('global', 'have_prefix', 'False')
     cp.set('global', 'prefix', '')

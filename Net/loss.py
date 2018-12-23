@@ -4,7 +4,7 @@ import torch
 
 
 class CTPN_Loss(nn.Module):
-    def __init__(self, Ns, ratio, lambda1=1.0, lambda2=1.0, using_cuda=False):
+    def __init__(self, Ns, Nv, No, ratio, lambda1=1.0, lambda2=1.0, using_cuda=False):
         super(CTPN_Loss, self).__init__()
         self.Ns = Ns
         self.ratio = ratio
@@ -14,6 +14,8 @@ class CTPN_Loss(nn.Module):
         self.Lv_reg = nn.SmoothL1Loss()
         self.Lo_reg = nn.SmoothL1Loss()
         self.using_cuda = using_cuda
+        self.Nv = Nv
+        self.No = No
 
     def forward(self, score, vertical_pred, side_refinement, positive, negative, vertical_reg, side_refinement_reg):
         """
@@ -50,26 +52,28 @@ class CTPN_Loss(nn.Module):
 
         # calculate vertical coordinate regression loss
         v_reg_loss = 0.0
-        Nv = len(vertical_reg)
+        Nv = min(len(vertical_reg), self.Nv)
+        vertical_reg_batch = random.sample(vertical_reg, Nv)
         if self.using_cuda:
-            for v in vertical_reg:
+            for v in vertical_reg_batch:
                 v_reg_loss += self.Lv_reg(vertical_pred[0, v[2] * 2: ((v[2] + 1) * 2), v[1], v[0]].view(1, -1),
                                           torch.FloatTensor([v[3], v[4]]).unsqueeze(0).cuda())
         else:
-            for v in vertical_reg:
+            for v in vertical_reg_batch:
                 v_reg_loss += self.Lv_reg(vertical_pred[0, v[2] * 2: ((v[2] + 1) * 2), v[1], v[0]].view(1, -1),
                                           torch.FloatTensor([v[3], v[4]]).unsqueeze(0))
         v_reg_loss = v_reg_loss / float(Nv)
 
         # calculate side refinement regression loss
         o_reg_loss = 0.0
-        No = len(side_refinement_reg)
+        No = min(len(side_refinement_reg), self.No)
+        side_refinement_reg_batch = random.sample(side_refinement_reg, No)
         if self.using_cuda:
-            for s in side_refinement_reg:
+            for s in side_refinement_reg_batch:
                 o_reg_loss += self.Lo_reg(side_refinement[0, s[2]: s[2] + 1, s[1], s[0]].view(1, -1),
                                           torch.FloatTensor([s[3]]).unsqueeze(0).cuda())
         else:
-            for s in side_refinement_reg:
+            for s in side_refinement_reg_batch:
                 o_reg_loss += self.Lo_reg(side_refinement[0, s[2]: s[2] + 1, s[1], s[0]].view(1, -1),
                                           torch.FloatTensor([s[3]]).unsqueeze(0))
         o_reg_loss = o_reg_loss / float(No)

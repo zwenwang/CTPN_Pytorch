@@ -48,6 +48,8 @@ if __name__ == '__main__':
     pretrained_model = cf.get('global', 'pretrained_model')
 
     batch_size = cf.getint('global', 'batch_size')
+    v_batch_size = cf.getint('global', 'v_batch_size')
+    o_batch_size = cf.getint('global', 'o_batch_size')
     sample_ratio = cf.getfloat('global', 'sample_ratio')
     test_batch_num = cf.getint('global', 'test_batch_num')
 
@@ -80,7 +82,7 @@ if __name__ == '__main__':
         else:
             value.requires_grad = True
 
-    criterion = Net.CTPN_Loss(batch_size, sample_ratio, using_cuda=using_cuda)
+    criterion = Net.CTPN_Loss(batch_size, v_batch_size, o_batch_size, sample_ratio, using_cuda=using_cuda)
 
     # 使用CUDA
     if using_cuda:
@@ -197,6 +199,7 @@ if __name__ == '__main__':
 
             # 验证
             if iteration % val_iter == 0:
+                net.zero_grad()
                 net.eval()
                 logger.info('Start evaluate at {0} epoch {1} iteration.'.format(i, iteration))
                 val_func.val(net, criterion, test_batch_num, using_cuda, logger, test_dataset)
