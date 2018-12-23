@@ -55,6 +55,12 @@ def scale_img(img, gt, shortest_side=600):
 
 
 def read_gt_file(path, have_BOM=False):
+    """
+    读取groundtruth文件，每个框由8个点构成
+    :param path: 路径
+    :param have_BOM: 是否有BOM字符串
+    :return: 列表
+    """
     result = []
     if have_BOM:
         fp = codecs.open(path, 'r', 'utf-8-sig')

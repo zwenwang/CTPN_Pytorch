@@ -3,6 +3,7 @@ from torch.utils.data import Dataset
 import lmdb
 import other
 import json
+import numpy as np
 
 
 class LmdbDataset(Dataset):
@@ -24,6 +25,7 @@ class LmdbDataset(Dataset):
             img_key = 'image-%09d' % index
             img_base64 = e.get(img_key)
             img = other.base642np_image(img_base64)
+            img = img - np.float32([102.9801, 115.9465, 122.7717])
             gt_key = 'gt-%09d' % index
             gt = e.get(gt_key)
             gt = json.loads(gt)
