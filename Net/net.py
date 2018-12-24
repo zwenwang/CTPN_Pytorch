@@ -97,7 +97,7 @@ class CTPN(nn.Module):
             score = score.transpose(1, 2)
             score = score.transpose(2, 3)
             score = score.reshape((-1, 2))
-            # score = F.softmax(score, dim=1)
+            score = F.softmax(score, dim=1)
             score = score.reshape((10, vertical_pred.shape[2], -1, 2))
 
             vertical_pred = vertical_pred.reshape((vertical_pred.shape[0], 10, 2, vertical_pred.shape[2],

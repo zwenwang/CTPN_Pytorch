@@ -106,3 +106,11 @@ def perspective_trans(src, img, mode=max):
                                     np.float32([[0, 0], [width, 0], [width, height], [0, height]]))
     result = cv2.warpPerspective(img, m, (width, height))
     return result
+
+
+def normalize(data):
+    if data.shape[0] == 0:
+        return data
+    max_ = data.max()
+    min_ = data.min()
+    return (data-min_)/(max_-min_) if max_-min_ != 0 else data-min_
