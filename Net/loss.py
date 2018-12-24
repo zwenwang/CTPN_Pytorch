@@ -31,6 +31,7 @@ class CTPN_Loss(nn.Module):
         # calculate classification loss
         positive_num = min(int(self.Ns * self.ratio), len(positive))
         negative_num = self.Ns - positive_num
+        negative_num = min(negative_num, len(negative))
         positive_batch = random.sample(positive, positive_num)
         negative_batch = random.sample(negative, negative_num)
         cls_loss = 0.0
