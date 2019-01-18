@@ -11,8 +11,10 @@ def get_json_str(img, img_name, gt_box, anchor_width=16):
     json_obj = {'file': img_name}
     data = []
     for box in gt_box:
-        temp = [box]
         gt_anchor = generate_gt_anchor(img, box, anchor_width=anchor_width)
+        if len(gt_anchor) == 0:
+            continue
+        temp = [box]
         temp.append(gt_anchor)
         data.append(temp)
     json_obj.update(data=data)
