@@ -2,10 +2,10 @@
 import math
 import other
 import copy
-# from other.lib import find_top_bottom as f
+import numpy as np
 
 
-def generate_gt_anchor(img, box, anchor_width=16, cpu_speedup=True):
+def generate_gt_anchor(img, box, anchor_width=16):
     """
     把文本框分成一个个16px的小框的
     :param img: input image 输入的图片
@@ -20,14 +20,15 @@ def generate_gt_anchor(img, box, anchor_width=16, cpu_speedup=True):
     result = []
     # 算一下最左边和最右边在x轴方向都是第几个anchor
     left_anchor_num = int(math.floor(min(box[0], box[6]) / anchor_width))
-    right_anchor_num = int(math.ceil(max(box[2], box[4]) / anchor_width))
+    right_anchor_num = int(math.floor(max(box[2], box[4]) / anchor_width))
     # 超出图像边界的就不要了
     if right_anchor_num * 16 + 15 > img.shape[1]:
         right_anchor_num -= 1
     # 产生每个anchor最左边像素和最右边像素的横坐标
-    position_pair = [(i * anchor_width, (i + 1) * anchor_width - 1) for i in range(left_anchor_num, right_anchor_num)]
+    position_pair = [(i * anchor_width, (i + 1) * anchor_width - 1)
+                     for i in range(left_anchor_num, right_anchor_num + 1)]
     # 针对每个anchor算一下上下的y坐标
-    y_top, y_bottom = cal_y_top_and_bottom(img, position_pair, box, cpu_speedup=cpu_speedup)
+    y_top, y_bottom = cal_y_top_and_bottom(img, position_pair, box)
     # 返回结果，position是左到右第几个anchor（从0开始）
     for i in range(len(position_pair)):
         position = int(position_pair[i][0] / anchor_width)
@@ -39,16 +40,15 @@ def generate_gt_anchor(img, box, anchor_width=16, cpu_speedup=True):
     return result
 
 
-def cal_y_top_and_bottom(raw_img, position_pair, box, cpu_speedup=False):
+def cal_y_top_and_bottom(raw_img, position_pair, box):
     """
     根据每个anchor的细条，算它的高度的，就是上下y坐标
-    用了巨蠢的方法，就是先把图像的一个通道（好象是B）全变成0
+    用了巨蠢的方法，就是先把图像的一个通道全变成0
     然后利用B=255的颜色画groundtruth文本框
     最后每个anchor的细条里找y坐标最大的和最小的像素，这个就是上下y坐标
     :param raw_img: 原始图像
     :param position_pair: for example:[(0, 15), (16, 31), ...]
     :param box: gt box (4 point)
-    :param cpu_speedup: use cython speed up
     :return: top and bottom coordinates for y-axis
     """
     img = copy.deepcopy(raw_img)
@@ -56,55 +56,33 @@ def cal_y_top_and_bottom(raw_img, position_pair, box, cpu_speedup=False):
         for j in range(img.shape[1]):
             img[i, j, 0] = 0
     img = other.draw_box_4pt(img, box, color=(255, 0, 0))
-    if cpu_speedup:
-        # y_top, y_bottom = f.find_top_bottom(img, position_pair)
-        y_top = []
-        y_bottom = []
-        height = img.shape[0]
-        top_flag = False
-        bottom_flag = False
-        for k in range(len(position_pair)):
-            for y in range(0, height):
-                for x in range(position_pair[k][0], position_pair[k][1] + 1):
-                    if img[y, x, 0] == 255:
-                        y_top.append(y)
-                        top_flag = True
-                        break
-                if top_flag is True:
-                    break
-            for y in range(height - 1, -1, -1):
-                for x in range(position_pair[k][0], position_pair[k][1] + 1):
-                    if img[y, x, 0] == 255:
-                        y_bottom.append(y)
-                        bottom_flag = True
-                        break
-                if bottom_flag is True:
-                    break
-            top_flag = False
-            bottom_flag = False
-    else:
-        y_top = []
-        y_bottom = []
-        height = img.shape[0]
-        top_flag = False
-        bottom_flag = False
-        for k in range(len(position_pair)):
-            for y in range(0, height):
-                for x in range(position_pair[k][0], position_pair[k][1] + 1):
-                    if img[y, x, 0] == 255:
-                        y_top.append(y)
-                        top_flag = True
-                        break
-                if top_flag is True:
-                    break
-            for y in range(height - 1, -1, -1):
-                for x in range(position_pair[k][0], position_pair[k][1] + 1):
-                    if img[y, x, 0] == 255:
-                        y_bottom.append(y)
-                        bottom_flag = True
-                        break
-                if bottom_flag is True:
-                    break
-            top_flag = False
-            bottom_flag = False
+    # # y_top, y_bottom = f.find_top_bottom(img, position_pair)
+    y_top = []
+    y_bottom = []
+    # height = img.shape[0]
+    # top_flag = False
+    # bottom_flag = False
+    # for k in range(len(position_pair)):
+    #     for y in range(0, height):
+    #         for x in range(position_pair[k][0], position_pair[k][1] + 1):
+    #             if img[y, x, 0] == 255:
+    #                 y_top.append(y)
+    #                 top_flag = True
+    #                 break
+    #         if top_flag is True:
+    #             break
+    #     for y in range(height - 1, -1, -1):
+    #         for x in range(position_pair[k][0], position_pair[k][1] + 1):
+    #             if img[y, x, 0] == 255:
+    #                 y_bottom.append(y)
+    #                 bottom_flag = True
+    #                 break
+    #         if bottom_flag is True:
+    #             break
+    #     top_flag = False
+    #     bottom_flag = False
+    for k in range(len(position_pair)):
+        y_coord = np.where(img[:, position_pair[k][0]:(position_pair[k][1] + 1), 0] == 255)[0]
+        y_top.append(np.min(y_coord))
+        y_bottom.append(np.max(y_coord))
     return y_top, y_bottom

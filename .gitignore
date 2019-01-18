@@ -23,3 +23,4 @@ test_lmdb.py
 /ICDAR
 /test
 test_utils.py
+/old

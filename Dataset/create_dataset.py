@@ -1,19 +1,18 @@
 # coding=utf-8
-import os
 import lmdb
 import cv2
 import other
 import codecs
 import json
-import generate_gt_anchor
+from generate_gt_anchor import generate_gt_anchor
 
 
-def to_json(img, img_name, gt_box, anchor_width=16):
+def get_json_str(img, img_name, gt_box, anchor_width=16):
     json_obj = {'file': img_name}
     data = []
     for box in gt_box:
         temp = [box]
-        gt_anchor = generate_gt_anchor.generate_gt_anchor(img, box, anchor_width=anchor_width)
+        gt_anchor = generate_gt_anchor(img, box, anchor_width=anchor_width)
         temp.append(gt_anchor)
         data.append(temp)
     json_obj.update(data=data)
@@ -21,23 +20,27 @@ def to_json(img, img_name, gt_box, anchor_width=16):
     return str_json
 
 
-def scale_img(img, gt, shortest_side=600):
+def scale_img(img, gt, shortest_side=600, anchor_width=16):
     """
+    先把最短边缩放到600,然后将宽度缩放到16的倍数来满足最终的总步长
     :param img: 图片，opencv读取
     :param gt: groundtruth坐标
     :param shortest_side: 最短边长
+    :param anchor_width: anchor宽度
     :return: 返回缩放后的图片和坐标
     """
     height = img.shape[0]
     width = img.shape[1]
     scale = float(shortest_side)/float(min(height, width))
     img = cv2.resize(img, (0, 0), fx=scale, fy=scale)
-    if img.shape[0] < img.shape[1] and img.shape[0] != 600:
-        img = cv2.resize(img, (600, img.shape[1]))
-    elif img.shape[0] > img.shape[1] and img.shape[1] != 600:
-        img = cv2.resize(img, (img.shape[0], 600))
-    elif img.shape[0] != 600:
-        img = cv2.resize(img, (600, 600))
+    # if img.shape[0] < img.shape[1] and img.shape[0] != 600:
+    #     img = cv2.resize(img, (600, img.shape[1]))
+    # elif img.shape[0] > img.shape[1] and img.shape[1] != 600:
+    #     img = cv2.resize(img, (img.shape[0], 600))
+    # elif img.shape[0] != 600:
+    #     img = cv2.resize(img, (600, 600))
+    remainder = img.shape[1] % anchor_width
+    img = cv2.resize(img, (img.shape[1] + (anchor_width - remainder), img.shape[0]))
     h_scale = float(img.shape[0])/float(height)
     w_scale = float(img.shape[1])/float(width)
     if gt is None:
@@ -68,10 +71,7 @@ def read_gt_file(path, have_BOM=False):
         fp = open(path, 'r')
     for line in fp.readlines():
         pt = line.split(',')
-        if have_BOM:
-            box = [int(pt[i]) for i in range(8)]
-        else:
-            box = [int(pt[i]) for i in range(8)]
+        box = [int(pt[i]) for i in range(8)]
         result.append(box)
     fp.close()
     return result
@@ -161,7 +161,7 @@ class LMDB():
             print('GroundTruth is not valid.')
             return False
         img, gt = scale_img(img, gt)
-        json_str = to_json(img, img_name,  gt, anchor_width=anchor_width)
+        json_str = get_json_str(img, img_name,  gt, anchor_width=anchor_width)
         txn = self.env.begin(write=True)
         num = int(txn.get('num'))
 

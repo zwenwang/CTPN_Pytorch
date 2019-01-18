@@ -7,22 +7,6 @@ MIN_V_OVERLAPS = 0.7
 MIN_SIZE_SIM = 0.7
 
 
-class Graph:
-    def __init__(self, graph):
-        self.graph = graph
-
-    def sub_graphs_connected(self):
-        sub_graphs = []
-        for index in xrange(self.graph.shape[0]):
-            if not self.graph[:, index].any() and self.graph[index, :].any():
-                v = index
-                sub_graphs.append([v])
-                while self.graph[v, :].any():
-                    v = np.where(self.graph[v, :])[0][0]
-                    sub_graphs[-1].append(v)
-        return sub_graphs
-
-
 class TextProposalGraphBuilder:
     """
         Build Text proposals into a graph.
@@ -34,13 +18,13 @@ class TextProposalGraphBuilder:
         pass
 
     def get_successions(self, index):  # 生成文本框对
-            box = self.text_proposals[index]
+            box = self.text_proposals[index]  # 先根据index从怕人哦破萨拉里选一个
             results = []
-            for left in range(int(box[0])+1, min(int(box[0]) + MAX_HORIZONTAL_GAP + 1, self.im_size[1])):
+            for left in range(int(box[0])+1, min(int(box[0]) + MAX_HORIZONTAL_GAP + 1, self.im_size[1])):  # 根据box的第0个横坐标，查找坐标右边50px内的所有proposal
                 # print(left)
-                adj_box_indices = self.boxes_table[left]
-                for adj_box_index in adj_box_indices:
-                    if self.meet_v_iou(adj_box_index, index):
+                adj_box_indices = self.boxes_table[left]  # 根据每个px从boxes tabel里找对应的列表，即图片的每一列一个列表
+                for adj_box_index in adj_box_indices:  # 从这列里遍历所有的proposal
+                    if self.meet_v_iou(adj_box_index, index):  # 满足一定条件的proposal放在result里
                         results.append(adj_box_index)
                 if len(results) != 0:
                     return results
@@ -83,19 +67,19 @@ class TextProposalGraphBuilder:
         self.text_proposals = text_proposals
         self.scores = scores
         self.im_size = im_size
-        self.heights = text_proposals[:, 3] - text_proposals[:, 1] + 1
+        self.heights = text_proposals[:, 3] - text_proposals[:, 1] + 1  # 计算每个proposal的高度
 
         # print(text_proposals)
         # print(self.heights)
         # print(text_proposals)
 
-        boxes_table = [[] for _ in range(self.im_size[1])]  # 创建了一个长800的列表
+        boxes_table = [[] for _ in range(self.im_size[1])]  # 创建了一个长800的列表，根据图片宽度
         for index, box in enumerate(text_proposals):  # 根据box的第0个坐标，对应到boxtables里，并且统计了其坐标
             boxes_table[int(box[0])].append(index)
         self.boxes_table = boxes_table
         # print(boxes_table)
 
-        graph = np.zeros((text_proposals.shape[0], text_proposals.shape[0]), np.bool)  # 创建了一个bool图
+        graph = np.zeros((text_proposals.shape[0], text_proposals.shape[0]), np.bool)  # 创建了一个bool图，大小根据proposal数量见方
 
         for index, box in enumerate(text_proposals):
             successions = self.get_successions(index)

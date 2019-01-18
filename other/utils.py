@@ -4,6 +4,7 @@ import base64
 import os
 import torch
 import math
+from matplotlib import cm
 
 
 def draw_box_4pt(img, pt, color=(0, 255, 0), thickness=1):
@@ -32,6 +33,71 @@ def draw_box_h_and_c(img, position, cy, h, anchor_width=16, color=(0, 255, 0), t
     y_bottom = int(cy + (float(h) - 1) / 2.0)
     pt = [x_left, y_top, x_right, y_bottom]
     return draw_box_2pt(img, pt, color=color, thickness=thickness)
+
+
+def draw_boxes(im, bboxes, is_display=True, color=None, thickness=1):
+    """
+        boxes: bounding boxes
+    """
+    text_recs = np.zeros((len(bboxes), 8), np.int)
+
+    im = im.copy()
+    index = 0
+    for box in bboxes:
+        if color is None:
+            if len(box) == 8 or len(box) == 9:
+                c = tuple(cm.jet([box[-1]])[0, 2::-1] * 255)
+            else:
+                c = tuple(np.random.randint(0, 256, 3))
+        else:
+            c = color
+
+        b1 = box[6] - box[7] / 2
+        b2 = box[6] + box[7] / 2
+        x1 = box[0]
+        y1 = box[5] * box[0] + b1
+        x2 = box[2]
+        y2 = box[5] * box[2] + b1
+        x3 = box[0]
+        y3 = box[5] * box[0] + b2
+        x4 = box[2]
+        y4 = box[5] * box[2] + b2
+
+        disX = x2 - x1
+        disY = y2 - y1
+        width = np.sqrt(disX * disX + disY * disY)
+        fTmp0 = y3 - y1
+        fTmp1 = fTmp0 * disY / width
+        x = np.fabs(fTmp1 * disX / width)
+        y = np.fabs(fTmp1 * disY / width)
+        if box[5] < 0:
+            x1 -= x
+            y1 += y
+            x4 += x
+            y4 -= y
+        else:
+            x2 += x
+            y2 += y
+            x3 -= x
+            y3 -= y
+        cv2.line(im, (int(x1), int(y1)), (int(x2), int(y2)), c, thickness=thickness)
+        cv2.line(im, (int(x1), int(y1)), (int(x3), int(y3)), c, thickness=thickness)
+        cv2.line(im, (int(x4), int(y4)), (int(x2), int(y2)), c, thickness=thickness)
+        cv2.line(im, (int(x3), int(y3)), (int(x4), int(y4)), c, thickness=thickness)
+        text_recs[index, 0] = x1
+        text_recs[index, 1] = y1
+        text_recs[index, 2] = x2
+        text_recs[index, 3] = y2
+        text_recs[index, 4] = x3
+        text_recs[index, 5] = y3
+        text_recs[index, 6] = x4
+        text_recs[index, 7] = y4
+        index = index + 1
+        # cv2.rectangle(im, tuple(box[:2]), tuple(box[2:4]), c,2)
+    if is_display:
+        cv2.imshow('result', im)
+        cv2.waitKey(0)
+    return text_recs
 
 
 def trans_to_2pt(position, cy, h, anchor_width=16):

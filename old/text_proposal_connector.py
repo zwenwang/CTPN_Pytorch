@@ -1,5 +1,6 @@
+# coding=utf-8
 import numpy as np
-from text_proposal_graph_builder import TextProposalGraphBuilder
+from old.text_proposal_graph_builder import TextProposalGraphBuilder
 
 
 def threshold(coords, min_, max_):
@@ -27,17 +28,18 @@ class TextProposalConnector:
         return graph.sub_graphs_connected()
 
     def fit_y(self, X, Y, x1, x2):
-        len(X) != 0
+        # len(X) != 0
         # if X only include one point, the function will get line y=Y[0]
         if np.sum(X == X[0]) == len(X):
             return Y[0], Y[0]
-        p=np.poly1d(np.polyfit(X, Y, 1))
+        p = np.poly1d(np.polyfit(X, Y, 1))
         return p(x1), p(x2)
 
     def get_text_lines(self, text_proposals, scores, im_size):
         # tp=text proposal
         tp_groups = self.group_text_proposals(text_proposals, scores, im_size)
         text_lines = np.zeros((len(tp_groups), 5), np.float32)
+        # text_lines = []
 
         for index, tp_indices in enumerate(tp_groups):
             text_line_boxes = text_proposals[list(tp_indices)]
@@ -46,9 +48,17 @@ class TextProposalConnector:
             x1 = np.max(text_line_boxes[:, 2])
 
             offset = (text_line_boxes[0, 2]-text_line_boxes[0, 0])*0.5
-
+            #
             lt_y, rt_y = self.fit_y(text_line_boxes[:, 0], text_line_boxes[:, 1], x0+offset, x1-offset)
             lb_y, rb_y = self.fit_y(text_line_boxes[:, 0], text_line_boxes[:, 3], x0+offset, x1-offset)
+
+            x0 = np.min(text_line_boxes[:, 0])
+            x1 = min(np.max(text_line_boxes[:, 0]) + 15, im_size[1])
+            x2 = np.max(text_line_boxes[:, 2])
+            x3 = max(np.min(text_line_boxes[:, 2]) - 15, 0)
+
+            # y0, y1 = self.fit_y(text_line_boxes[:, 0], text_line_boxes[:, 1], x0, x1)
+            # y2, y3 = self.fit_y(text_line_boxes[:, 2], text_line_boxes[:, 3], x2, x3)
 
             # the score of a text line is the average score of the scores
             # of all text proposals contained in the text line
@@ -60,6 +70,16 @@ class TextProposalConnector:
             text_lines[index, 3] = max(lb_y, rb_y)
             text_lines[index, 4] = score
 
-        text_lines=clip_boxes(text_lines, im_size)
+            # text_lines[index, 0] = x0
+            # text_lines[index, 1] = max(y0, 0)
+            # text_lines[index, 2] = x1
+            # text_lines[index, 3] = max(y1, 0)
+            # text_lines[index, 4] = x2
+            # text_lines[index, 5] = min(y2, im_size[0])
+            # text_lines[index, 6] = x3
+            # text_lines[index, 7] = min(y2, im_size[0])
+            # text_lines[index, 8] = score
+
+        text_lines = clip_boxes(text_lines, im_size)
 
         return text_lines
