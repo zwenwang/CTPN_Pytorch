@@ -83,6 +83,8 @@ def cal_y_top_and_bottom(raw_img, position_pair, box):
     #     bottom_flag = False
     for k in range(len(position_pair)):
         y_coord = np.where(img[:, position_pair[k][0]:(position_pair[k][1] + 1), 0] == 255)[0]
+        if len(y_coord) == 0:
+            continue
         y_top.append(np.min(y_coord))
         y_bottom.append(np.max(y_coord))
     return y_top, y_bottom
