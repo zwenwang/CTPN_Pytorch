@@ -158,6 +158,9 @@ if __name__ == '__main__':
                 vertical_reg += vertical_reg1
                 side_refinement_reg += side_refinement_reg1
 
+            if len(positive) == 0 or len(negative) == 0 or len(vertical_reg) == 0 or len(side_refinement_reg) == 0:
+                continue
+
             # 清梯度，算loss，反传
             net.zero_grad()
             loss, cls_loss, v_reg_loss, o_reg_loss = criterion(score, vertical_pred, side_refinement, positive,
