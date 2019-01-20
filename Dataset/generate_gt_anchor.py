@@ -29,6 +29,8 @@ def generate_gt_anchor(img, box, anchor_width=16):
                      for i in range(left_anchor_num, right_anchor_num + 1)]
     # 针对每个anchor算一下上下的y坐标
     y_top, y_bottom = cal_y_top_and_bottom(img, position_pair, box)
+    if len(y_top) != len(position_pair):
+        return result
     # 返回结果，position是左到右第几个anchor（从0开始）
     for i in range(len(position_pair)):
         position = int(position_pair[i][0] / anchor_width)
@@ -83,6 +85,8 @@ def cal_y_top_and_bottom(raw_img, position_pair, box):
     #     bottom_flag = False
     for k in range(len(position_pair)):
         y_coord = np.where(img[:, position_pair[k][0]:(position_pair[k][1] + 1), 0] == 255)[0]
+        if len(y_coord) == 0:
+            continue
         y_top.append(np.min(y_coord))
         y_bottom.append(np.max(y_coord))
     return y_top, y_bottom
