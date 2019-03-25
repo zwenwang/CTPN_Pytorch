@@ -88,10 +88,10 @@ def draw_boxes(im, bboxes, is_display=True, color=None, thickness=1):
         text_recs[index, 1] = y1
         text_recs[index, 2] = x2
         text_recs[index, 3] = y2
-        text_recs[index, 4] = x3
-        text_recs[index, 5] = y3
-        text_recs[index, 6] = x4
-        text_recs[index, 7] = y4
+        text_recs[index, 4] = x4
+        text_recs[index, 5] = y4
+        text_recs[index, 6] = x3
+        text_recs[index, 7] = y3
         index = index + 1
         # cv2.rectangle(im, tuple(box[:2]), tuple(box[2:4]), c,2)
     if is_display:
@@ -180,3 +180,22 @@ def normalize(data):
     max_ = data.max()
     min_ = data.min()
     return (data-min_)/(max_-min_) if max_-min_ != 0 else data-min_
+
+
+def img_slicing(img, max_height, max_width):
+    height, width, channel = img.shape
+    col = math.ceil(float(width) / float(max_width))
+    row = math.ceil(float(height) / float(max_height))
+    block_width = int(round(float(width) / col))
+    block_height = int(round(float(height) / row))
+    img = cv2.resize(img, (int(block_width * col), int(block_height * row)))
+    img_series = []
+    for i in range(int(row)):
+        for j in range(int(col)):
+            img_series.append(img[i * block_height:(i + 1) * block_height - 1,
+                              j * block_width:(j + 1) * block_width - 1, :])
+    name = '2'
+    for i in img_series:
+        cv2.imwrite(name + '.jpg', i)
+        name = name + '1'
+    return np.array(img_series)

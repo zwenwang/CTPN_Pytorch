@@ -8,6 +8,7 @@ import Net
 from other.lib import nms
 import math
 from proposal_connector import TextProposalConnector
+import os
 anchor_height = [11, 16, 22, 32, 46, 66, 94, 134, 191, 273]
 
 
@@ -26,23 +27,20 @@ def filter_boxes(boxes):
                     (widths > (TEXT_PROPOSALS_WIDTH * MIN_NUM_PROPOSALS)))[0]
 
 
-if __name__ == '__main__':
-    text_connector = TextProposalConnector()
+def detect(root, img_file, model_file):
     net = Net.CTPN()
-    net.load_state_dict(torch.load('./model/ctpn-cn.model'))
-    net.cuda()
+    net.load_state_dict(torch.load(model_file))
+    # net.cuda()
     print(net)
     net.eval()
-    # im = cv2.imread('/home/wzw/ICDAR2015/test_image/img_99.jpg')
-    im = cv2.imread('/home/wzw/IMG_0513.JPG')
-    # im = cv2.imread('/home/wzw/990714656.jpg')
-    # gt = Dataset.port.read_gt_file('/home/wzw/ICDAR2015/test_gt/gt_img_99.txt')
-    im = Dataset.scale_img(im, None, shortest_side=600)
+    text_connector = TextProposalConnector()
+    im = cv2.imread(os.path.join(root, img_file))
+    # im = Dataset.scale_img(im, None, shortest_side=600)
     img = copy.deepcopy(im)
     img = img.transpose(2, 0, 1)
     img = img[np.newaxis, :, :, :]
     img = torch.Tensor(img)
-    img = img.cuda()
+    # img = img.cuda()
     v, score, side = net(img, val=True)
     score = score.cpu().detach().numpy()[:, :, :, 1]
     result = np.where(score > 0.7)
@@ -77,6 +75,20 @@ if __name__ == '__main__':
         text_lines = text_lines[keep_inds]
 
     rec = other.draw_boxes(im, text_lines)
+    rec_file = open(os.path.join(img_dir, img_file.split('.')[0] + '.txt'), 'w')
+    rec = rec.tolist()
+    for box in rec:
+        box = [str(pt) for pt in box]
+        rec_file.write(','.join(box))
+        rec_file.write('\n')
 
-    # cv2.imshow('kk', im)
-    # cv2.waitKey(0)
+
+if __name__ == '__main__':
+    img_dir = './demo_image'
+    model = './model/ctpn2.pth'
+    # file_list = os.listdir(img_dir)
+    # for f in file_list:
+    #     ext = f.split('.')[-1]
+    #     if ext != 'jpg' and ext != 'JPG':
+    #         continue
+    detect(img_dir, '1111.jpg', model)

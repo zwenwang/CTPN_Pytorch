@@ -8,6 +8,15 @@ from generate_gt_anchor import generate_gt_anchor
 
 
 def get_json_str(img, img_name, gt_box, anchor_width=16):
+    # json字符串格式：
+    # {
+    #   'file' : 图片名称
+    #   'data' : [
+    #              box的8个点,
+    #              存有anchor的列表,
+    #              anchor个数
+    #            ]
+    #  }
     json_obj = {'file': img_name}
     data = []
     for box in gt_box:
@@ -16,6 +25,7 @@ def get_json_str(img, img_name, gt_box, anchor_width=16):
             continue
         temp = [box]
         temp.append(gt_anchor)
+        temp.append(len(gt_anchor))
         data.append(temp)
     json_obj.update(data=data)
     str_json = json.dumps(json_obj)

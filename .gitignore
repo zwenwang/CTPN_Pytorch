@@ -25,3 +25,5 @@ test_lmdb.py
 test_utils.py
 /old
 rctw.py
+/demo_image
+/bill_rec_lib

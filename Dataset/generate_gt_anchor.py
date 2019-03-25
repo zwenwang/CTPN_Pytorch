@@ -5,13 +5,13 @@ import copy
 import numpy as np
 
 
-def generate_gt_anchor(img, box, anchor_width=16):
+def generate_gt_anchor(img, box, anchor_width=16, threshold=7):
     """
     把文本框分成一个个16px的小框的
     :param img: input image 输入的图片
     :param box: ground truth box (4 point) 一个文本框的四个点
     :param anchor_width: anchor的长度
-    :param cpu_speedup: use cython speed up 用不用cython加速（快了大概一倍）
+    :param threshold:
     :return: tuple (position, h, cy)
     """
     # 看看文本框是不是用float表示的
@@ -21,6 +21,14 @@ def generate_gt_anchor(img, box, anchor_width=16):
     # 算一下最左边和最右边在x轴方向都是第几个anchor
     left_anchor_num = int(math.floor(min(box[0], box[6]) / anchor_width))
     right_anchor_num = int(math.floor(max(box[2], box[4]) / anchor_width))
+
+    # 规定了一个距离gt box边界的最小值
+    if left_anchor_num * anchor_width + threshold < min(box[0], box[6]):
+        left_anchor_num = left_anchor_num + 1
+
+    if right_anchor_num * anchor_width + threshold > max(box[2], box[4]):
+        right_anchor_num = right_anchor_num - 1
+
     # 超出图像边界的就不要了
     if right_anchor_num * 16 + 15 > img.shape[1]:
         right_anchor_num -= 1
@@ -38,7 +46,11 @@ def generate_gt_anchor(img, box, anchor_width=16):
         h = y_bottom[i] - y_top[i] + 1
         # cy就是论文里的cy（每个anchor中心点y坐标）
         cy = (float(y_bottom[i]) + float(y_top[i])) / 2.0
-        result.append((position, cy, h))
+        # if i == 0 or i == len(position_pair) - 1:
+        #     result.append((position, cy, h, 1))
+        # else:
+        #     result.append((position, cy, h, 0))
+        result.append((position, cy, h, i))
     return result
 
 

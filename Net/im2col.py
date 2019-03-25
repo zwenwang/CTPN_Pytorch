@@ -12,5 +12,5 @@ class Im2col(nn.Module):
     def forward(self, x):
         height = x.shape[2]
         x = F.unfold(x, self.kernel_size, padding=self.padding, stride=self.stride)
-        x = x.reshape((x.shape[0], x.shape[1], height, -1))
+        x = x.view((x.shape[0], x.shape[1], height, -1))
         return x

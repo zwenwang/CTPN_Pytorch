@@ -4,9 +4,9 @@ import torch
 import warnings
 
 
-class CTPN_Loss(nn.Module):
+class CTPNLoss(nn.Module):
     def __init__(self, Ns, Nv, No, ratio, lambda1=1.0, lambda2=1.0, using_cuda=False):
-        super(CTPN_Loss, self).__init__()
+        super(CTPNLoss, self).__init__()
         self.Ns = Ns
         self.ratio = ratio
         self.lambda1 = lambda1

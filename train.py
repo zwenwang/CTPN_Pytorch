@@ -82,7 +82,7 @@ if __name__ == '__main__':
         else:
             value.requires_grad = True
 
-    criterion = Net.CTPN_Loss(batch_size, v_batch_size, o_batch_size, sample_ratio, using_cuda=using_cuda)
+    criterion = Net.CTPNLoss(batch_size, v_batch_size, o_batch_size, sample_ratio, using_cuda=using_cuda)
 
     # 使用CUDA
     if using_cuda:
@@ -142,7 +142,7 @@ if __name__ == '__main__':
                 img = img.cuda()
 
             # 将图片送入网络并产生结果
-            vertical_pred, score, side_refinement = net(img)
+            vertical_pred, score, side_refinement_pred = net(img)
             # 总是显存爆炸，所以删了图片的tensor
             del img
             # 用来存真实值的
@@ -152,7 +152,8 @@ if __name__ == '__main__':
             side_refinement_reg = []
             for box in gt['data']:
                 # 根据分好的anchor产生每个输出要的anchor
-                positive1, negative1, vertical_reg1, side_refinement_reg1 = Net.tag_anchor(box[1], score, box[0])
+                positive1, negative1, vertical_reg1, side_refinement_reg1 = \
+                    Net.tag_anchor(box, score.shape[2], score.shape[3])
                 positive += positive1
                 negative += negative1
                 vertical_reg += vertical_reg1
@@ -163,7 +164,7 @@ if __name__ == '__main__':
 
             # 清梯度，算loss，反传
             net.zero_grad()
-            loss, cls_loss, v_reg_loss, o_reg_loss = criterion(score, vertical_pred, side_refinement, positive,
+            loss, cls_loss, v_reg_loss, o_reg_loss = criterion(score, vertical_pred, side_refinement_pred, positive,
                                                                negative, vertical_reg, side_refinement_reg)
             loss.backward()
             optimizer.step()
