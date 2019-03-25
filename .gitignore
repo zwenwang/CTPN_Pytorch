@@ -27,3 +27,5 @@ test_utils.py
 rctw.py
 /demo_image
 /bill_rec_lib
+*.pth
+*.model
