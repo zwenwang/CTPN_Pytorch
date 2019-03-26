@@ -4,7 +4,7 @@ import cv2
 import other
 import codecs
 import json
-from generate_gt_anchor import generate_gt_anchor
+from .generate_gt_anchor import generate_gt_anchor
 
 
 def get_json_str(img, img_name, gt_box, anchor_width=16):

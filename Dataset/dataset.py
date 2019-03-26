@@ -12,7 +12,7 @@ class LmdbDataset(Dataset):
         if not self.env:
             print("Cannot create lmdb from root {0}.".format(root))
         with self.env.begin(write=False) as e:
-            self.data_num = int(e.get('num'))
+            self.data_num = int(e.get('num'.encode()))
         self.transformer = transformer
 
     def __len__(self):
@@ -23,10 +23,10 @@ class LmdbDataset(Dataset):
         # index += 1
         with self.env.begin(write=False) as e:
             img_key = 'image-%09d' % index
-            img_base64 = e.get(img_key)
+            img_base64 = e.get(img_key.encode())
             img = other.base642np_image(img_base64)
             img = img - np.float32([102.9801, 115.9465, 122.7717])
             gt_key = 'gt-%09d' % index
-            gt = e.get(gt_key)
+            gt = e.get(gt_key.encode())
             gt = json.loads(gt)
         return img, gt

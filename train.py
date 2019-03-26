@@ -5,7 +5,7 @@ import Dataset
 import Net
 import os
 import other
-import ConfigParser
+import configparser as ConfigParser
 import time
 import val_func
 import logging
