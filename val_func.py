@@ -34,7 +34,7 @@ def val(net, criterion, batch_num, using_cuda, logger, test_dataset):
         side_refinement_reg = []
         for box in gt['data']:
             # 根据分好的anchor产生每个输出要的anchor
-            positive1, negative1, vertical_reg1, side_refinement_reg1 = Net.tag_anchor(box[1], score, box[0])
+            positive1, negative1, vertical_reg1, side_refinement_reg1 = Net.tag_anchor(box, score.shape[2], score.shape[3])
             positive += positive1
             negative += negative1
             vertical_reg += vertical_reg1

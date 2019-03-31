@@ -108,18 +108,19 @@ if __name__ == '__main__':
     if optimizer_type == 'SGD':
         momentum = cf.getfloat('parameter', 'momentum')
         weight_decay = cf.getfloat('parameter', 'weight_decay')
-        optimizer = optim.SGD(net.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
+        optimizer = optim.SGD(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, momentum=momentum,
+                              weight_decay=weight_decay)
         print('Use SGD, lr={0}, momentum={1}, weight decay={2}'.format(lr, momentum, weight_decay))
         logger.info('Use SGD, lr={0}, momentum={1}, weight decay={2}'.format(lr, momentum, weight_decay))
 
     elif optimizer_type == 'Adam':
-        optimizer = optim.Adam(net.parameters(), lr=lr)
+        optimizer = optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=lr)
         print('Use Adam, lr={0}'.format(lr))
         logger.info('Use Adam, lr={0}'.format(lr))
 
     elif optimizer_type == 'Adadelta':
         rho = cf.getfloat('parameter', 'rho')
-        optimizer = optim.Adadelta(net.parameters(), lr=lr, rho=rho)
+        optimizer = optim.Adadelta(filter(lambda p: p.requires_grad, net.parameters()), lr=lr, rho=rho)
         print('Use Adadelta, lr={0}, rho={1}'.format(lr, rho))
         logger.info('Use Adadelta, lr={0}, rho={1}'.format(lr, rho))
 
